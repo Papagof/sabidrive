@@ -13,8 +13,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 coverage/
-public/sw.js
-public/workbox-*.js
-public/worker-*.js
-public/fallback-*.js
+**/public/sw.js
+**/public/swe-worker-*.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/fallback-*.js
 .vercel

@@ -10,6 +10,9 @@
     "./client": "./src/client.ts"
   },
   "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "peerDependencies": {
     "react": "^18.3.0"
   },

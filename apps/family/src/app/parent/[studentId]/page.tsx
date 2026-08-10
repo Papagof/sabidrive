@@ -80,20 +80,22 @@ export default function StudentTrackingPage() {
 
   useEffect(() => {
     if (!tripId || !student?.default_stop_id) return;
+    const activeTripId = tripId;
+    const activeStopId = student.default_stop_id;
 
     async function loadEta() {
       const { data } = await supabase
         .from("trip_stop_etas")
         .select("eta_minutes")
-        .eq("trip_id", tripId)
-        .eq("stop_id", student!.default_stop_id!)
+        .eq("trip_id", activeTripId)
+        .eq("stop_id", activeStopId)
         .maybeSingle();
       setEtaMinutes((data?.eta_minutes as number | undefined) ?? null);
     }
     void loadEta();
 
     const channel = supabase
-      .channel(`eta-${tripId}-${student.default_stop_id}`)
+      .channel(`eta-${activeTripId}-${activeStopId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "trip_stop_etas", filter: `trip_id=eq.${tripId}` },

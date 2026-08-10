@@ -59,7 +59,7 @@ export interface CreateRouteInput {
 export async function createRoute(supabase: TripmeSupabaseClient, input: CreateRouteInput) {
   const { data, error } = await supabase.from("routes").insert(input).select().single();
   if (error) throw error;
-  return data;
+  return data as unknown as CreateRouteInput & { id: string };
 }
 
 export interface CreateStopInput {

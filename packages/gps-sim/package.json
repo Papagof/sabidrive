@@ -6,7 +6,8 @@
   "types": "src/engine.ts",
   "sideEffects": false,
   "scripts": {
-    "sim:dev": "tsx watch src/run-local.ts"
+    "sim:dev": "tsx watch src/run-local.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
