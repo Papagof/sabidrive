@@ -28,7 +28,7 @@ export function useFleetTrips() {
   const refetchTrips = useCallback(async () => {
     const { data } = await supabase
       .from("trips")
-      .select("id, bus_id, route_id, status, direction, started_at, buses(label), routes(name)")
+      .select("id, bus_id, route_id, status, direction, started_at, buses!trips_bus_id_fkey(label), routes(name)")
       .eq("status", "in_progress")
       .order("started_at", { ascending: false });
     if (data) setTrips(data as unknown as FleetTripRow[]);
