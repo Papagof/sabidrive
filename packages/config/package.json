@@ -1,0 +1,10 @@
+{
+  "name": "@tripme/config",
+  "private": true,
+  "version": "0.1.0",
+  "main": "eslint-preset.cjs",
+  "files": [
+    "tsconfig.base.json",
+    "eslint-preset.cjs"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "extends": "@tripme/config/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

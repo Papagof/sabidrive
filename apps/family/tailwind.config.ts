@@ -1,0 +1,12 @@
+import type { Config } from "tailwindcss";
+import sharedPreset from "@tripme/ui/src/tailwind-preset";
+
+const config: Config = {
+  presets: [sharedPreset as Config],
+  content: [
+    "./src/**/*.{ts,tsx}",
+    "../../packages/ui/src/**/*.{ts,tsx}"
+  ]
+};
+
+export default config;
