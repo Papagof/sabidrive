@@ -9,4 +9,5 @@ export * as tripQueries from "./queries/trips";
 export * as studentQueries from "./queries/students";
 export * as adminQueries from "./queries/admin";
 export * as pushQueries from "./queries/push";
+export * as userQueries from "./queries/users";
 export type { Database } from "./types.gen";

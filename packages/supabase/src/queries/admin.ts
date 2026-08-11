@@ -27,6 +27,18 @@ export async function setDriverVerification(supabase: TripmeSupabaseClient, driv
   if (error) throw error;
 }
 
+export async function getSchoolStaffAndGuardians(supabase: TripmeSupabaseClient, schoolId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, role, verification_status")
+    .eq("school_id", schoolId)
+    .in("role", ["driver", "parent"])
+    .order("role")
+    .order("full_name");
+  if (error) throw error;
+  return data;
+}
+
 export async function getSchoolStudents(supabase: TripmeSupabaseClient, schoolId: string) {
   const { data, error } = await supabase
     .from("students")

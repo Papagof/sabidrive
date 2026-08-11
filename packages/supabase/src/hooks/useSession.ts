@@ -7,6 +7,7 @@ import { useSupabaseClient } from "../context";
 export interface Profile {
   id: string;
   full_name: string;
+  email: string | null;
   phone: string | null;
   role: "parent" | "driver" | "admin" | "student";
   school_id: string | null;

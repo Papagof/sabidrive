@@ -12,3 +12,24 @@ export function createServiceRoleSupabaseClient(url: string, serviceRoleKey: str
     auth: { persistSession: false, autoRefreshToken: false }
   });
 }
+
+/**
+ * Anon-key client for server contexts with no session storage (e.g. a Route
+ * Handler verifying a bearer token passed by the browser) — like the
+ * browser client but without assuming `window`/localStorage exist.
+ */
+export function createAnonServerSupabaseClient(url: string, anonKey: string): TripmeSupabaseClient {
+  return createClient<Database>(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+
+/** Resolves the caller behind a bearer token, or null if it's invalid/expired. */
+export async function getUserFromAccessToken(
+  anonClient: TripmeSupabaseClient,
+  accessToken: string
+): Promise<{ id: string } | null> {
+  const { data, error } = await anonClient.auth.getUser(accessToken);
+  if (error || !data.user) return null;
+  return { id: data.user.id };
+}

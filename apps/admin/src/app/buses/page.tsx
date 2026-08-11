@@ -5,6 +5,9 @@ import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
 import { adminQueries, useSupabaseClient } from "@tripme/supabase";
+import { InviteUserForm } from "@/components/InviteUserForm";
+
+const INVITE_NEW_DRIVER = "__invite_new_driver__";
 
 type VerificationStatus = "pending" | "verified" | "rejected";
 
@@ -39,6 +42,7 @@ export default function BusesPage() {
   const [routeId, setRouteId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isInvitingDriver, setIsInvitingDriver] = useState(false);
 
   async function refetch() {
     if (!profile?.school_id) return;
@@ -100,8 +104,15 @@ export default function BusesPage() {
               className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
             />
             <select
-              value={driverId}
-              onChange={(e) => setDriverId(e.target.value)}
+              value={isInvitingDriver ? INVITE_NEW_DRIVER : driverId}
+              onChange={(e) => {
+                if (e.target.value === INVITE_NEW_DRIVER) {
+                  setIsInvitingDriver(true);
+                } else {
+                  setIsInvitingDriver(false);
+                  setDriverId(e.target.value);
+                }
+              }}
               className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
             >
               <option value="">Assign driver…</option>
@@ -110,7 +121,19 @@ export default function BusesPage() {
                   {d.full_name}
                 </option>
               ))}
+              <option value={INVITE_NEW_DRIVER}>+ Invite new driver…</option>
             </select>
+            {isInvitingDriver ? (
+              <InviteUserForm
+                role="driver"
+                onCancel={() => setIsInvitingDriver(false)}
+                onInvited={async (user) => {
+                  setIsInvitingDriver(false);
+                  await refetch();
+                  setDriverId(user.userId);
+                }}
+              />
+            ) : null}
             <select
               value={routeId}
               onChange={(e) => setRouteId(e.target.value)}

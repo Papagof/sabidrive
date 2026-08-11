@@ -6,6 +6,9 @@ import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Button, Card } from "@tripme/ui";
 import { adminQueries, useSupabaseClient } from "@tripme/supabase";
+import { InviteUserForm } from "@/components/InviteUserForm";
+
+const INVITE_NEW_GUARDIAN = "__invite_new_guardian__";
 
 interface StudentRow {
   id: string;
@@ -64,6 +67,7 @@ export default function StudentsPage() {
   const [overrideName, setOverrideName] = useState("");
   const [overrideRelationship, setOverrideRelationship] = useState("");
   const [overrideNotes, setOverrideNotes] = useState("");
+  const [isInvitingGuardian, setIsInvitingGuardian] = useState(false);
 
   async function refetch() {
     if (!profile?.school_id) return;
@@ -127,8 +131,15 @@ export default function StudentsPage() {
     setOverrideName("");
     setOverrideRelationship("");
     setOverrideNotes("");
+    setIsInvitingGuardian(false);
     const rows = await adminQueries.getPickupOverrides(supabase, studentId);
     setOverrides(rows as unknown as PickupOverrideRow[]);
+  }
+
+  async function handleGuardianInvited(studentId: string, userId: string) {
+    setIsInvitingGuardian(false);
+    await adminQueries.linkGuardianToStudent(supabase, userId, studentId);
+    await refetch();
   }
 
   async function handleAddOverride(studentId: string) {
@@ -236,8 +247,15 @@ export default function StudentsPage() {
                   <div className="flex flex-1 flex-col gap-2">
                     <div className="flex gap-2">
                       <select
-                        value={guardianId[s.id] ?? ""}
-                        onChange={(e) => setGuardianId((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                        value={isInvitingGuardian ? INVITE_NEW_GUARDIAN : guardianId[s.id] ?? ""}
+                        onChange={(e) => {
+                          if (e.target.value === INVITE_NEW_GUARDIAN) {
+                            setIsInvitingGuardian(true);
+                          } else {
+                            setIsInvitingGuardian(false);
+                            setGuardianId((prev) => ({ ...prev, [s.id]: e.target.value }));
+                          }
+                        }}
                         className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
                       >
                         <option value="">Link guardian…</option>
@@ -246,9 +264,17 @@ export default function StudentsPage() {
                             {g.full_name}
                           </option>
                         ))}
+                        <option value={INVITE_NEW_GUARDIAN}>+ Invite new guardian…</option>
                       </select>
-                      <Button onClick={() => handleLinkGuardian(s.id)}>Link</Button>
+                      {!isInvitingGuardian ? <Button onClick={() => handleLinkGuardian(s.id)}>Link</Button> : null}
                     </div>
+                    {isInvitingGuardian ? (
+                      <InviteUserForm
+                        role="parent"
+                        onCancel={() => setIsInvitingGuardian(false)}
+                        onInvited={(user) => handleGuardianInvited(s.id, user.userId)}
+                      />
+                    ) : null}
 
                     <div className="rounded-xl border border-neutral-200 p-3">
                       <p className="mb-2 text-sm font-medium">Pickup authorization</p>
