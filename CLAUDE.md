@@ -97,3 +97,15 @@ The push pipeline (`notifications` insert → `dispatch_push_notification` trigg
 - `PUSH_DISPATCH_SECRET` = `f0b475bff10d901a6a4de081c4a16ca2df77e8cd11a4d0e997c34b1e66054e3b` (must match the Vault secret named `push_dispatch_secret` set in `0016_push_dispatch_trigger.sql` — if you ever rotate it, update both sides via `select vault.update_secret(...)`)
 
 Once set, subscribe from the family app (Parent or Driver home → "Enable notifications" — note `next-pwa`'s own service worker is dev-disabled, but `public/push-worker.js` is a separate, always-active registration) and trigger any notification (e.g. an admin announcement) to see a real push.
+
+(Status: the user has added these Edge Function secrets — not yet re-verified end-to-end in this session.)
+
+## Admin-invited accounts (Phase 3)
+
+The only way to create a driver/parent account is now `scripts/seed.ts` (demo data) **or** an admin inviting them by email from the admin app (Buses/Students "+ Invite new…", or the dedicated Staff & Guardians page). No public signup.
+
+- `apps/admin/src/app/api/invite-user/route.ts` — the admin app's **first server-side code path**. Verifies the caller's bearer token, confirms `role === 'admin'` via their own `profiles` row (service-role client), then calls `auth.admin.inviteUserByEmail` with `role`/`school_id` taken **only** from the verified caller's profile — never from the request body, so this endpoint can't be used to invite a fake admin or into another school. Needs `SUPABASE_SERVICE_ROLE_KEY` + `SUPABASE_URL` + `FAMILY_APP_URL` in `apps/admin/.env.local` (server-only — the pattern is the same as `scripts/seed.ts`, not a shift to SSR page rendering).
+- `apps/family/src/app/set-password/page.tsx` — where the invite email's link lands; supabase-js auto-detects the session from the URL, then the user sets a password and gets redirected by role.
+- `profiles.email` (added in `0019_profiles_email.sql`) is a denormalized copy of `auth.users.email`, kept in sync by `handle_new_user` — added because PostgREST can't expose the `auth` schema directly and the Staff page/dropdowns need it for display.
+
+**Manual step required**: Supabase Auth requires `redirectTo` URLs to be on an allow-list (Dashboard → Authentication → URL Configuration → Redirect URLs) — no MCP tool manages this. Add the family app's `/set-password` URL (e.g. `http://localhost:3002/set-password` in dev) before testing the real email → click-link → set-password flow. Also: no custom SMTP is configured, so invites go through Supabase's default email service, which is rate-limited (hit this during verification) — fine for occasional testing, not for real invite volume.
