@@ -8,4 +8,5 @@ export * from "./hooks/useFleetTrips";
 export * as tripQueries from "./queries/trips";
 export * as studentQueries from "./queries/students";
 export * as adminQueries from "./queries/admin";
+export * as pushQueries from "./queries/push";
 export type { Database } from "./types.gen";

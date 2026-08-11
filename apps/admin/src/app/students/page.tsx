@@ -34,6 +34,14 @@ interface GuardianOption {
   full_name: string;
 }
 
+interface PickupOverrideRow {
+  id: string;
+  authorized_name: string;
+  authorized_relationship: string | null;
+  notes: string | null;
+  valid_date: string;
+}
+
 export default function StudentsPage() {
   const { profile, isLoading } = useRequireAdmin();
   const supabase = useSupabaseClient();
@@ -51,6 +59,11 @@ export default function StudentsPage() {
   const [guardianId, setGuardianId] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const [overrides, setOverrides] = useState<PickupOverrideRow[]>([]);
+  const [overrideName, setOverrideName] = useState("");
+  const [overrideRelationship, setOverrideRelationship] = useState("");
+  const [overrideNotes, setOverrideNotes] = useState("");
 
   async function refetch() {
     if (!profile?.school_id) return;
@@ -103,6 +116,35 @@ export default function StudentsPage() {
     if (!selected) return;
     await adminQueries.linkGuardianToStudent(supabase, selected, studentId);
     await refetch();
+  }
+
+  async function toggleExpanded(studentId: string) {
+    if (expandedId === studentId) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(studentId);
+    setOverrideName("");
+    setOverrideRelationship("");
+    setOverrideNotes("");
+    const rows = await adminQueries.getPickupOverrides(supabase, studentId);
+    setOverrides(rows as unknown as PickupOverrideRow[]);
+  }
+
+  async function handleAddOverride(studentId: string) {
+    if (!overrideName.trim() || !profile) return;
+    await adminQueries.createPickupOverride(supabase, {
+      student_id: studentId,
+      authorized_name: overrideName.trim(),
+      authorized_relationship: overrideRelationship || undefined,
+      notes: overrideNotes || undefined,
+      created_by: profile.id
+    });
+    setOverrideName("");
+    setOverrideRelationship("");
+    setOverrideNotes("");
+    const rows = await adminQueries.getPickupOverrides(supabase, studentId);
+    setOverrides(rows as unknown as PickupOverrideRow[]);
   }
 
   const stopsForRoute = stops.filter((s) => s.route_id === routeId);
@@ -181,7 +223,7 @@ export default function StudentsPage() {
                     Guardians: {s.guardian_student_links.map((l) => l.profiles?.full_name).filter(Boolean).join(", ") || "none"}
                   </p>
                 </div>
-                <Button variant="ghost" onClick={() => setExpandedId(expandedId === s.id ? null : s.id)}>
+                <Button variant="ghost" onClick={() => toggleExpanded(s.id)}>
                   {expandedId === s.id ? "Hide" : "Manage"}
                 </Button>
               </div>
@@ -191,20 +233,60 @@ export default function StudentsPage() {
                     <QRCodeSVG value={s.qr_token} size={96} />
                     <span className="text-xs text-neutral-500">Boarding QR code</span>
                   </div>
-                  <div className="flex flex-1 gap-2">
-                    <select
-                      value={guardianId[s.id] ?? ""}
-                      onChange={(e) => setGuardianId((prev) => ({ ...prev, [s.id]: e.target.value }))}
-                      className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
-                    >
-                      <option value="">Link guardian…</option>
-                      {guardians.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.full_name}
-                        </option>
-                      ))}
-                    </select>
-                    <Button onClick={() => handleLinkGuardian(s.id)}>Link</Button>
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="flex gap-2">
+                      <select
+                        value={guardianId[s.id] ?? ""}
+                        onChange={(e) => setGuardianId((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                        className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+                      >
+                        <option value="">Link guardian…</option>
+                        {guardians.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.full_name}
+                          </option>
+                        ))}
+                      </select>
+                      <Button onClick={() => handleLinkGuardian(s.id)}>Link</Button>
+                    </div>
+
+                    <div className="rounded-xl border border-neutral-200 p-3">
+                      <p className="mb-2 text-sm font-medium">Pickup authorization</p>
+                      {overrides.length > 0 ? (
+                        <ul className="mb-2 flex flex-col gap-1 text-sm text-neutral-600">
+                          {overrides.map((o) => (
+                            <li key={o.id}>
+                              {o.authorized_name}
+                              {o.authorized_relationship ? ` (${o.authorized_relationship})` : ""} — {o.valid_date}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mb-2 text-sm text-neutral-500">No same-day pickup overrides.</p>
+                      )}
+                      <p className="mb-1 text-xs text-neutral-500">Authorize someone else to pick up today:</p>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                          value={overrideName}
+                          onChange={(e) => setOverrideName(e.target.value)}
+                          placeholder="Name"
+                          className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                        />
+                        <input
+                          value={overrideRelationship}
+                          onChange={(e) => setOverrideRelationship(e.target.value)}
+                          placeholder="Relationship"
+                          className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                        />
+                        <input
+                          value={overrideNotes}
+                          onChange={(e) => setOverrideNotes(e.target.value)}
+                          placeholder="Notes"
+                          className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                        />
+                        <Button onClick={() => handleAddOverride(s.id)}>Add</Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : null}

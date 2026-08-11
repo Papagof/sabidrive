@@ -34,7 +34,7 @@ export async function getDriverBus(supabase: TripmeSupabaseClient, driverId: str
 export async function getTripWithDriverContact(supabase: TripmeSupabaseClient, tripId: string) {
   const { data, error } = await supabase
     .from("trips")
-    .select("id, bus_id, buses!trips_bus_id_fkey(label, driver:driver_id(full_name, phone))")
+    .select("id, bus_id, buses!trips_bus_id_fkey(label, driver:driver_id(full_name, phone, verification_status))")
     .eq("id", tripId)
     .single();
   if (error) throw error;

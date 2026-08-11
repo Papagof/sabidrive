@@ -1,7 +1,7 @@
 /**
  * Generated via the Supabase MCP `generate_typescript_types` tool from the
- * live schema (project ubslfmtqebuuxujohksd) after migrations 0001-0005.
- * Regenerate and replace this file whenever migrations change.
+ * live schema (project ubslfmtqebuuxujohksd) after Phase 2 migrations
+ * 0008-0014. Regenerate and replace this file whenever migrations change.
  */
 export type Json =
   | string
@@ -21,8 +21,10 @@ export type Database = {
     Tables: {
       alerts: {
         Row: {
+          assigned_to: string | null
           created_at: string
           id: string
+          notes: string | null
           payload: Json
           resolved_at: string | null
           resolved_by: string | null
@@ -32,8 +34,10 @@ export type Database = {
           type: string
         }
         Insert: {
+          assigned_to?: string | null
           created_at?: string
           id?: string
+          notes?: string | null
           payload?: Json
           resolved_at?: string | null
           resolved_by?: string | null
@@ -43,8 +47,10 @@ export type Database = {
           type: string
         }
         Update: {
+          assigned_to?: string | null
           created_at?: string
           id?: string
+          notes?: string | null
           payload?: Json
           resolved_at?: string | null
           resolved_by?: string | null
@@ -54,6 +60,13 @@ export type Database = {
           type?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "alerts_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "alerts_resolved_by_fkey"
             columns: ["resolved_by"]
@@ -73,6 +86,48 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          school_id: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          school_id: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          school_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
             referencedColumns: ["id"]
           },
         ]
@@ -365,6 +420,54 @@ export type Database = {
           },
         ]
       }
+      pickup_overrides: {
+        Row: {
+          authorized_name: string
+          authorized_relationship: string | null
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          student_id: string
+          valid_date: string
+        }
+        Insert: {
+          authorized_name: string
+          authorized_relationship?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          student_id: string
+          valid_date?: string
+        }
+        Update: {
+          authorized_name?: string
+          authorized_relationship?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          student_id?: string
+          valid_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pickup_overrides_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pickup_overrides_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -374,6 +477,7 @@ export type Database = {
           phone: string | null
           role: string
           school_id: string | null
+          verification_status: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -383,6 +487,7 @@ export type Database = {
           phone?: string | null
           role: string
           school_id?: string | null
+          verification_status?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -392,6 +497,7 @@ export type Database = {
           phone?: string | null
           role?: string
           school_id?: string | null
+          verification_status?: string | null
         }
         Relationships: [
           {
@@ -399,6 +505,41 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -470,6 +611,41 @@ export type Database = {
           timezone?: string
         }
         Relationships: []
+      }
+      sms_outbox: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          recipient_phone: string
+          related_notification_id: string | null
+          status: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          recipient_phone: string
+          related_notification_id?: string | null
+          status?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          recipient_phone?: string
+          related_notification_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_outbox_related_notification_id_fkey"
+            columns: ["related_notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stops: {
         Row: {
@@ -747,10 +923,15 @@ export type Database = {
         Args: { p_event_type?: string; p_qr_token: string; p_trip_id: string }
         Returns: undefined
       }
+      create_announcement: {
+        Args: { p_body: string; p_title: string }
+        Returns: string
+      }
       current_role: { Args: never; Returns: string }
       current_school_id: { Args: never; Returns: string }
       end_trip: { Args: { p_trip_id: string }; Returns: undefined }
       is_guardian_of: { Args: { target_student_id: string }; Returns: boolean }
+      purge_old_data: { Args: never; Returns: undefined }
       start_trip: {
         Args: { p_bus_id: string; p_direction?: string }
         Returns: string

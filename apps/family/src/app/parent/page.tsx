@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card } from "@tripme/ui";
 import { studentQueries, useSupabaseClient } from "@tripme/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
+import { NotificationOptIn } from "@/components/NotificationOptIn";
 
 interface StudentRow {
   id: string;
@@ -33,7 +34,13 @@ export default function ParentHomePage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
-      <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
+        <Link href="/parent/announcements" className="text-sm text-brand-700">
+          Announcements
+        </Link>
+      </div>
+      {profile ? <NotificationOptIn userId={profile.id} /> : null}
       <p className="text-neutral-600">Your children</p>
       <div className="flex flex-col gap-3">
         {students.map((s) => (

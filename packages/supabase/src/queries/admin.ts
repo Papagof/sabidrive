@@ -13,11 +13,18 @@ export async function getSchoolRoutes(supabase: TripmeSupabaseClient, schoolId: 
 export async function getSchoolBuses(supabase: TripmeSupabaseClient, schoolId: string) {
   const { data, error } = await supabase
     .from("buses")
-    .select("*, driver:driver_id(id, full_name), routes:default_route_id(id, name)")
+    .select("*, driver:driver_id(id, full_name, verification_status), routes:default_route_id(id, name)")
     .eq("school_id", schoolId)
     .order("label");
   if (error) throw error;
   return data;
+}
+
+export type VerificationStatus = "pending" | "verified" | "rejected";
+
+export async function setDriverVerification(supabase: TripmeSupabaseClient, driverId: string, status: VerificationStatus) {
+  const { error } = await supabase.from("profiles").update({ verification_status: status }).eq("id", driverId);
+  if (error) throw error;
 }
 
 export async function getSchoolStudents(supabase: TripmeSupabaseClient, schoolId: string) {
@@ -41,11 +48,16 @@ export async function getSchoolAlerts(supabase: TripmeSupabaseClient, schoolId: 
   return data;
 }
 
-export async function resolveAlert(supabase: TripmeSupabaseClient, alertId: string, resolvedBy: string) {
+export async function resolveAlert(supabase: TripmeSupabaseClient, alertId: string, resolvedBy: string, notes?: string) {
   const { error } = await supabase
     .from("alerts")
-    .update({ resolved_at: new Date().toISOString(), resolved_by: resolvedBy })
+    .update({ resolved_at: new Date().toISOString(), resolved_by: resolvedBy, ...(notes ? { notes } : {}) })
     .eq("id", alertId);
+  if (error) throw error;
+}
+
+export async function assignAlertToSelf(supabase: TripmeSupabaseClient, alertId: string, adminId: string) {
+  const { error } = await supabase.from("alerts").update({ assigned_to: adminId }).eq("id", alertId);
   if (error) throw error;
 }
 
@@ -106,6 +118,73 @@ export async function createStudent(supabase: TripmeSupabaseClient, input: Creat
   const { data, error } = await supabase.from("students").insert(input).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function getPickupOverrides(supabase: TripmeSupabaseClient, studentId: string) {
+  const { data, error } = await supabase
+    .from("pickup_overrides")
+    .select("*")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export interface CreatePickupOverrideInput {
+  student_id: string;
+  authorized_name: string;
+  authorized_relationship?: string;
+  notes?: string;
+  created_by: string;
+}
+
+export async function createPickupOverride(supabase: TripmeSupabaseClient, input: CreatePickupOverrideInput) {
+  const { error } = await supabase.from("pickup_overrides").insert(input);
+  if (error) throw error;
+}
+
+export async function getSchoolAnnouncements(supabase: TripmeSupabaseClient, schoolId: string) {
+  const { data, error } = await supabase
+    .from("announcements")
+    .select("*, profiles:created_by(full_name)")
+    .eq("school_id", schoolId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function createAnnouncement(supabase: TripmeSupabaseClient, title: string, body: string) {
+  const { error } = await supabase.rpc("create_announcement", { p_title: title, p_body: body });
+  if (error) throw error;
+}
+
+export async function getSmsOutbox(supabase: TripmeSupabaseClient) {
+  const { data, error } = await supabase
+    .from("sms_outbox")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return data;
+}
+
+export async function getSchool(supabase: TripmeSupabaseClient, schoolId: string) {
+  const { data, error } = await supabase.from("schools").select("*").eq("id", schoolId).single();
+  if (error) throw error;
+  return data;
+}
+
+export interface UpdateSchoolInput {
+  name?: string;
+  timezone?: string;
+  geofence_lat?: number | null;
+  geofence_lng?: number | null;
+  geofence_radius_m?: number;
+}
+
+export async function updateSchool(supabase: TripmeSupabaseClient, schoolId: string, input: UpdateSchoolInput) {
+  const { error } = await supabase.from("schools").update(input).eq("id", schoolId);
+  if (error) throw error;
 }
 
 export async function linkGuardianToStudent(

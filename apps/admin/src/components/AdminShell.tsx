@@ -10,7 +10,10 @@ const NAV_ITEMS = [
   { href: "/routes", label: "Routes & stops" },
   { href: "/buses", label: "Buses" },
   { href: "/students", label: "Students" },
-  { href: "/alerts", label: "Alerts" }
+  { href: "/alerts", label: "Alerts" },
+  { href: "/announcements", label: "Announcements" },
+  { href: "/sms-log", label: "SMS log" },
+  { href: "/settings", label: "Settings" }
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {

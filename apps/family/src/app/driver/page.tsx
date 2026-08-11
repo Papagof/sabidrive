@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
 import { tripQueries, useSupabaseClient } from "@tripme/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
+import { NotificationOptIn } from "@/components/NotificationOptIn";
 
 interface DriverBus {
   id: string;
@@ -52,6 +53,7 @@ export default function DriverHomePage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
       <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
+      {profile ? <NotificationOptIn userId={profile.id} /> : null}
       <Card className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium">{bus.label}</h2>

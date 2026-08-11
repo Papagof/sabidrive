@@ -22,6 +22,7 @@ import {
   projectPointOntoRoute,
   type LatLng
 } from "./route-utils";
+import { simulateInstantSpeedKmh } from "./telemetry";
 
 config({ path: resolve(__dirname, "../../../.env.local") });
 
@@ -30,6 +31,7 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TICK_MS = 4000;
 const ROUTE_DEVIATION_THRESHOLD_M = 250;
 const APPROACHING_STOP_ETA_MINUTES = 5;
+const SPEED_ALERT_COOLDOWN_MS = 60_000;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error("Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in .env.local at repo root.");
@@ -56,6 +58,8 @@ interface RouteGeometry {
 interface TripRuntimeState {
   approachedStopIds: Set<string>;
   deviated: boolean;
+  previousInstantKmh: number | null;
+  lastSpeedAlertAtMs: number;
 }
 
 const routeGeometryCache = new Map<string, RouteGeometry>();
@@ -128,7 +132,9 @@ async function tickTrip(trip: { id: string; route_id: string; school_id: string;
   const geometry = await loadRouteGeometry(trip.route_id);
   if (!geometry) return;
 
-  const state = tripRuntimeState.get(trip.id) ?? { approachedStopIds: new Set<string>(), deviated: false };
+  const state =
+    tripRuntimeState.get(trip.id) ??
+    ({ approachedStopIds: new Set<string>(), deviated: false, previousInstantKmh: null, lastSpeedAlertAtMs: 0 } satisfies TripRuntimeState);
   tripRuntimeState.set(trip.id, state);
 
   const result = advanceTrip({
@@ -138,13 +144,28 @@ async function tickTrip(trip: { id: string; route_id: string; school_id: string;
     avgSpeedKmh: trip.avg_speed_kmh
   });
 
+  const telemetry = simulateInstantSpeedKmh(trip.avg_speed_kmh, state.previousInstantKmh);
+  state.previousInstantKmh = telemetry.speedKmh;
+
   await supabase.from("trip_locations").insert({
     trip_id: trip.id,
     lat: result.lat,
     lng: result.lng,
     heading_deg: result.headingDeg,
-    speed_kmh: result.speedKmh
+    speed_kmh: telemetry.speedKmh
   });
+
+  const nowMs = Date.now();
+  if ((telemetry.isSpeeding || telemetry.isHarshBrake) && nowMs - state.lastSpeedAlertAtMs > SPEED_ALERT_COOLDOWN_MS) {
+    state.lastSpeedAlertAtMs = nowMs;
+    await supabase.from("alerts").insert({
+      school_id: trip.school_id,
+      trip_id: trip.id,
+      type: telemetry.isHarshBrake ? "harsh_brake" : "speeding",
+      severity: "warning",
+      payload: { speed_kmh: Math.round(telemetry.speedKmh), avg_speed_kmh: trip.avg_speed_kmh }
+    });
+  }
 
   for (const stop of geometry.stops) {
     const etaMinutes = computeEtaMinutes(result.distanceAlongRouteM, stop.distanceAlongRouteM, result.speedKmh);

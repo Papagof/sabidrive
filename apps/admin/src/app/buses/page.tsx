@@ -6,13 +6,21 @@ import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
 import { adminQueries, useSupabaseClient } from "@tripme/supabase";
 
+type VerificationStatus = "pending" | "verified" | "rejected";
+
 interface BusRow {
   id: string;
   label: string;
   status: string;
-  driver: { id: string; full_name: string } | null;
+  driver: { id: string; full_name: string; verification_status: VerificationStatus | null } | null;
   routes: { id: string; name: string } | null;
 }
+
+const nextVerificationStatus: Record<VerificationStatus, VerificationStatus> = {
+  pending: "verified",
+  verified: "rejected",
+  rejected: "pending"
+};
 
 interface OptionRow {
   id: string;
@@ -48,6 +56,11 @@ export default function BusesPage() {
   }, [profile?.school_id]);
 
   if (isLoading) return null;
+
+  async function handleCycleVerification(driverId: string, current: VerificationStatus | null) {
+    await adminQueries.setDriverVerification(supabase, driverId, nextVerificationStatus[current ?? "pending"]);
+    await refetch();
+  }
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -126,7 +139,17 @@ export default function BusesPage() {
                   {bus.driver?.full_name ?? "No driver"} · {bus.routes?.name ?? "No route"}
                 </p>
               </div>
-              <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
+              <div className="flex items-center gap-2">
+                {bus.driver ? (
+                  <button onClick={() => handleCycleVerification(bus.driver!.id, bus.driver!.verification_status)}>
+                    <StatusPill
+                      label={`driver: ${bus.driver.verification_status ?? "pending"}`}
+                      tone={statusToneMap[bus.driver.verification_status ?? "pending"] ?? "neutral"}
+                    />
+                  </button>
+                ) : null}
+                <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
+              </div>
             </Card>
           ))}
           {buses.length === 0 ? <p className="text-neutral-500">No buses yet.</p> : null}

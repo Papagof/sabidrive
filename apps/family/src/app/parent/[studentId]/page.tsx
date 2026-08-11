@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { Banner, Button, Card, StatusPill } from "@tripme/ui";
+import { Banner, Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
 import type { MapStop } from "@tripme/ui";
 import { studentQueries, tripQueries, useNotifications, useSupabaseClient, useTripLocation } from "@tripme/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
@@ -27,7 +27,10 @@ interface Stop {
 
 interface DriverContact {
   bus_id: string;
-  buses: { label: string; driver: { full_name: string; phone: string | null } | null } | null;
+  buses: {
+    label: string;
+    driver: { full_name: string; phone: string | null; verification_status: string | null } | null;
+  } | null;
 }
 
 export default function StudentTrackingPage() {
@@ -139,7 +142,13 @@ export default function StudentTrackingPage() {
         <Card className="flex items-center justify-between">
           <div>
             <p className="text-sm text-neutral-500">Driver</p>
-            <p className="font-medium">{driver.full_name}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{driver.full_name}</p>
+              <StatusPill
+                label={driver.verification_status ?? "pending"}
+                tone={statusToneMap[driver.verification_status ?? "pending"] ?? "neutral"}
+              />
+            </div>
           </div>
           {driver.phone ? (
             <a href={`tel:${driver.phone}`}>
