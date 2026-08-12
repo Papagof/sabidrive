@@ -25,7 +25,7 @@ export interface MapPoint {
   lng: number;
 }
 
-const DEFAULT_CENTER: MapPoint = { lat: 30.2672, lng: -97.7431 };
+const DEFAULT_CENTER: MapPoint = { lat: 6.5244, lng: 3.3792 }; // Lagos, Nigeria
 
 function Recenter({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
