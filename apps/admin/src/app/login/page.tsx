@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button, Card } from "@tripme/ui";
 import { useSession, useSupabaseClient } from "@tripme/supabase";
 
@@ -62,6 +63,9 @@ export default function LoginPage() {
         </form>
       </Card>
       <p className="mt-4 text-center text-sm text-neutral-500">Demo: admin@tripme.dev — password TripmeDemo123!</p>
+      <p className="mt-2 text-center text-sm text-neutral-500">
+        New school? <Link href="/signup" className="text-brand-700">Create an account</Link>
+      </p>
     </main>
   );
 }

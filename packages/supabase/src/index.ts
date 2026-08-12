@@ -10,4 +10,5 @@ export * as studentQueries from "./queries/students";
 export * as adminQueries from "./queries/admin";
 export * as pushQueries from "./queries/push";
 export * as userQueries from "./queries/users";
+export * as schoolQueries from "./queries/schools";
 export type { Database } from "./types.gen";
