@@ -61,7 +61,19 @@ Swap in `apps/admin/.vercel/project.json` to redeploy admin instead.
 
 **Manual step required**: add `https://family-six-theta.vercel.app/set-password` to Supabase's redirect-URL allow-list (Dashboard → Authentication → URL Configuration → Redirect URLs) — same requirement as the localhost one, needed before an invite sent from the deployed admin app will actually redirect correctly.
 
-Not yet done: custom domain (both apps are on their `*.vercel.app` URLs), native Android/iOS packaging (Capacitor, planned as the next phase).
+Not yet done: custom domain (both apps are on their `*.vercel.app` URLs).
+
+## Native packaging (`apps/family-native`)
+
+Capacitor shell around the **family app only** (parent/driver — the admin dashboard stays web-only, it's a desktop tool). It ships no web assets of its own: `capacitor.config.ts`'s `server.url` points the WebView straight at the live deployed site (`https://family-six-theta.vercel.app`), so every push to `main` that redeploys `family` shows up in the native app instantly, no app-store resubmission needed. `www/` is a required-but-unused placeholder Capacitor needs even in remote-URL mode.
+
+- **App icon/splash**: generated via `npx capacitor-assets generate` from `assets/icon.png`/`assets/splash.png`, which `assets/generate-source-images.mjs` rasterizes from `apps/family/public/icons/icon.svg` (the one true source image — rerun the script + `generate` after changing it).
+- **Camera permission** (driver QR scanning) is wired on both platforms: `android/app/src/main/AndroidManifest.xml` (`CAMERA` + optional `android.hardware.camera` feature) and `ios/App/App/Info.plist` (`NSCameraUsageDescription`).
+- **Android**: fully buildable and verified on this machine (Java 21 + Android SDK already installed). `cd apps/family-native/android && ./gradlew.bat assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`. Confirmed end-to-end: installed on an emulator (`adb install`), launched, and it correctly rendered the live login screen.
+- **iOS**: scaffolded and configured (`ios/App`, Xcode project + Info.plist) but **not buildable in this environment** — no Mac available, and `xcodebuild`/CocoaPods need one. Building/signing/submitting needs either a real Mac or a cloud CI Mac runner (e.g. GitHub Actions' macOS runners, or a service like Codemagic) — not set up yet.
+- **Known gap**: the existing Web Push implementation (`apps/family/public/push-worker.js`) is unreliable inside a native WebView, especially on iOS (WKWebView doesn't support the web Push API the way an installed-PWA Safari tab does). In-app Supabase Realtime notifications work regardless. Real native push would mean adding `@capacitor/push-notifications` (FCM/APNs) — not done.
+- `appId` is `com.tripme.family` — a placeholder reverse-domain identifier, fine for development, but each store just needs it to be globally unique at actual submission time (doesn't require owning `tripme.com`).
+- Not done: release signing (keystore generation), Play Console / App Store Connect submission, native push.
 
 ## Data model & RLS mental model
 
