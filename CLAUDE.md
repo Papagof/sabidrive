@@ -37,6 +37,30 @@ Running the app for real requires **three processes**: `pnpm --filter family dev
 - `SUPABASE_SERVICE_ROLE_KEY` goes only in a root-level `.env.local` (read by `scripts/seed.ts` and `packages/gps-sim/src/run-local.ts`). Never import it into browser code.
 - After any migration change, regenerate `packages/supabase/src/types.gen.ts` via the `generate_typescript_types` MCP tool and re-run `get_advisors` as a security/perf gate.
 
+## Deployment (Vercel)
+
+Two separate Vercel projects under the `godfrey5` team, one per app — matches the two-app architecture, not one project with two output dirs:
+
+- **`family`** → https://family-six-theta.vercel.app
+- **`admin`** → https://admin-nine-tau-50.vercel.app
+
+Each project's **Root Directory** is set (via the Vercel API/dashboard, `Settings → General → Root Directory`) to `apps/family` / `apps/admin` respectively — required for Vercel to correctly detect the pnpm workspace and run `pnpm install` at the true monorepo root rather than treating the subfolder as an isolated project (a plain `vercel deploy` run *from inside* `apps/family` uploads only that subfolder and fails with `npm install` errors — confirmed the hard way).
+
+**Redeploying via CLI** (no GitHub integration is connected — these are CLI-linked, not auto-deploy-on-push): each app has its own `apps/*/​.vercel/project.json` (gitignored) from `vercel link`. Because of the Root-Directory-detection issue above, deploying must happen with the **monorepo root as CWD**, using a `.vercel/project.json` at the repo root that's a copy of the target app's — e.g. to redeploy family:
+```
+cp apps/family/.vercel/project.json .vercel/project.json
+vercel deploy --prod --token=<VERCEL_TOKEN>   # run from the repo root
+```
+Swap in `apps/admin/.vercel/project.json` to redeploy admin instead. (A proper GitHub-connected Vercel project wouldn't need this workaround — worth switching to if this becomes a frequent pain point.)
+
+**Environment variables** (set per-project in Vercel, `Production` scope — mirrors each app's `.env.local`):
+- `family`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`.
+- `admin`: the same two `NEXT_PUBLIC_*` vars, plus `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (server-only, used by `/api/invite-user`) and `FAMILY_APP_URL=https://family-six-theta.vercel.app` (so invite emails redirect to the deployed family app, not localhost).
+
+**Manual step required**: add `https://family-six-theta.vercel.app/set-password` to Supabase's redirect-URL allow-list (Dashboard → Authentication → URL Configuration → Redirect URLs) — same requirement as the localhost one, needed before an invite sent from the deployed admin app will actually redirect correctly.
+
+Not yet done: custom domain (both apps are on their `*.vercel.app` URLs), native Android/iOS packaging (Capacitor, planned as the next phase).
+
 ## Data model & RLS mental model
 
 Tables and relationships are documented top-to-bottom in `supabase/migrations/0002_core_schema.sql`. The access-control shape (`0003_rls_policies.sql`):
