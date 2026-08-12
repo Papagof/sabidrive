@@ -1,18 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Card, StatusPill } from "@tripme/ui";
-import type { FleetBusMarker } from "@tripme/ui";
-import { useFleetTrips } from "@tripme/supabase";
+import type { FleetBusMarker, MapPoint } from "@tripme/ui";
+import { adminQueries, useFleetTrips, useSupabaseClient } from "@tripme/supabase";
 
 const FleetMap = dynamic(() => import("@tripme/ui").then((m) => m.FleetMap), { ssr: false });
 
 export default function DashboardPage() {
-  const { isLoading } = useRequireAdmin();
+  const { profile, isLoading } = useRequireAdmin();
+  const supabase = useSupabaseClient();
   const { trips, latestByTrip } = useFleetTrips();
+  const [schoolAddress, setSchoolAddress] = useState<string | null>(null);
+  const [schoolCenter, setSchoolCenter] = useState<MapPoint | undefined>(undefined);
+
+  useEffect(() => {
+    if (!profile?.school_id) return;
+    adminQueries.getSchool(supabase, profile.school_id).then((data) => {
+      const school = data as unknown as { address: string | null; geofence_lat: number | null; geofence_lng: number | null };
+      setSchoolAddress(school.address);
+      if (school.geofence_lat != null && school.geofence_lng != null) {
+        setSchoolCenter({ lat: school.geofence_lat, lng: school.geofence_lng });
+      }
+    });
+  }, [supabase, profile?.school_id]);
 
   if (isLoading) return null;
 
@@ -26,9 +41,11 @@ export default function DashboardPage() {
 
   return (
     <AdminShell>
-      <h1 className="mb-4 text-2xl font-semibold text-brand-800">Fleet map</h1>
+      <h1 className="mb-1 text-2xl font-semibold text-brand-800">Fleet map</h1>
+      {schoolAddress ? <p className="mb-3 text-sm text-neutral-500">{schoolAddress}</p> : null}
       <div className="mb-6 h-96 overflow-hidden rounded-2xl border border-neutral-200">
-        <FleetMap buses={buses} />
+        {/* School location is the resting-state center; an active bus still takes priority once there's one to show. */}
+        <FleetMap buses={buses} center={buses.length === 0 ? schoolCenter : undefined} />
       </div>
 
       <h2 className="mb-2 text-lg font-medium">Active trips</h2>

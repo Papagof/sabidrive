@@ -2,6 +2,9 @@ import type { TripmeSupabaseClient } from "../client";
 
 export interface SignUpSchoolInput {
   school_name: string;
+  address: string;
+  geofence_lat: number;
+  geofence_lng: number;
   full_name: string;
   email: string;
   password: string;

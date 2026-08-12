@@ -587,6 +587,7 @@ export type Database = {
       }
       schools: {
         Row: {
+          address: string | null
           created_at: string
           geofence_lat: number | null
           geofence_lng: number | null
@@ -596,6 +597,7 @@ export type Database = {
           timezone: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           geofence_lat?: number | null
           geofence_lng?: number | null
@@ -605,6 +607,7 @@ export type Database = {
           timezone?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           geofence_lat?: number | null
           geofence_lng?: number | null

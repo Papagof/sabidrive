@@ -188,6 +188,7 @@ export async function getSchool(supabase: TripmeSupabaseClient, schoolId: string
 
 export interface UpdateSchoolInput {
   name?: string;
+  address?: string;
   timezone?: string;
   geofence_lat?: number | null;
   geofence_lng?: number | null;
