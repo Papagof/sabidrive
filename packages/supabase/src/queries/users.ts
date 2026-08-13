@@ -3,14 +3,14 @@ import type { TripmeSupabaseClient } from "../client";
 export interface InviteUserInput {
   email: string;
   full_name: string;
-  role: "driver" | "parent";
+  role: "driver" | "parent" | "admin";
   phone?: string;
 }
 
 /**
  * Calls the admin app's `/api/invite-user` Route Handler (the one place
  * that's allowed to touch the Supabase service-role key) to invite a new
- * driver or parent by email.
+ * driver, parent, or co-admin by email.
  */
 export async function inviteUser(supabase: TripmeSupabaseClient, input: InviteUserInput): Promise<{ userId: string }> {
   const { data: sessionData } = await supabase.auth.getSession();

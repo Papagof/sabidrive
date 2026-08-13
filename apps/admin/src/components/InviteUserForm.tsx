@@ -11,7 +11,7 @@ export interface InvitedUser {
 }
 
 export interface InviteUserFormProps {
-  role: "driver" | "parent";
+  role: "driver" | "parent" | "admin";
   onInvited: (user: InvitedUser) => void;
   onCancel?: () => void;
 }

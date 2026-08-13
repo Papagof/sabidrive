@@ -32,7 +32,7 @@ export async function getSchoolStaffAndGuardians(supabase: TripmeSupabaseClient,
     .from("profiles")
     .select("id, full_name, email, role, verification_status")
     .eq("school_id", schoolId)
-    .in("role", ["driver", "parent"])
+    .in("role", ["admin", "driver", "parent"])
     .order("role")
     .order("full_name");
   if (error) throw error;

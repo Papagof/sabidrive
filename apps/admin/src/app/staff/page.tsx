@@ -11,7 +11,7 @@ interface StaffRow {
   id: string;
   full_name: string;
   email: string | null;
-  role: "driver" | "parent";
+  role: "admin" | "driver" | "parent";
   verification_status: string | null;
 }
 
@@ -19,7 +19,7 @@ export default function StaffPage() {
   const { profile, isLoading } = useRequireAdmin();
   const supabase = useSupabaseClient();
   const [people, setPeople] = useState<StaffRow[]>([]);
-  const [invitingRole, setInvitingRole] = useState<"driver" | "parent" | null>(null);
+  const [invitingRole, setInvitingRole] = useState<"driver" | "parent" | "admin" | null>(null);
 
   async function refetch() {
     if (!profile?.school_id) return;
@@ -34,6 +34,7 @@ export default function StaffPage() {
 
   if (isLoading) return null;
 
+  const admins = people.filter((p) => p.role === "admin");
   const drivers = people.filter((p) => p.role === "driver");
   const guardians = people.filter((p) => p.role === "parent");
 
@@ -42,6 +43,9 @@ export default function StaffPage() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-brand-800">Staff &amp; guardians</h1>
         <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setInvitingRole(invitingRole === "admin" ? null : "admin")}>
+            Invite co-admin
+          </Button>
           <Button variant="secondary" onClick={() => setInvitingRole(invitingRole === "driver" ? null : "driver")}>
             Invite driver
           </Button>
@@ -64,7 +68,22 @@ export default function StaffPage() {
         </Card>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div>
+          <h2 className="mb-2 text-lg font-medium">Admins</h2>
+          <div className="flex flex-col gap-2">
+            {admins.map((a) => (
+              <Card key={a.id}>
+                <p className="font-medium">
+                  {a.full_name}
+                  {a.id === profile?.id ? <span className="text-neutral-400"> (you)</span> : null}
+                </p>
+                <p className="text-sm text-neutral-500">{a.email}</p>
+              </Card>
+            ))}
+            {admins.length === 0 ? <p className="text-neutral-500">No admins yet.</p> : null}
+          </div>
+        </div>
         <div>
           <h2 className="mb-2 text-lg font-medium">Drivers</h2>
           <div className="flex flex-col gap-2">

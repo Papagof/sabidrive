@@ -17,18 +17,18 @@ const FAMILY_APP_URL = process.env.FAMILY_APP_URL!;
 interface InviteBody {
   email?: string;
   full_name?: string;
-  role?: "driver" | "parent";
+  role?: "driver" | "parent" | "admin";
   phone?: string;
 }
 
 /**
- * Invites a driver or parent by email. This is the one privileged,
- * server-side operation in an otherwise fully client-side app — creating an
- * auth user requires the service-role key, which can never run in the
- * browser. `role`/`school_id` are always derived from the *caller's own*
+ * Invites a driver, parent, or co-admin by email. This is the one
+ * privileged, server-side operation in an otherwise fully client-side app —
+ * creating an auth user requires the service-role key, which can never run
+ * in the browser. `school_id` is always derived from the *caller's own*
  * verified profile, never taken from the request body, so an admin can only
- * ever invite people into their own school and can never mint another admin
- * through this endpoint.
+ * ever invite people (including co-admins) into their own school, never
+ * another school.
  */
 export async function POST(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -61,9 +61,9 @@ export async function POST(req: Request) {
   }
 
   const { email, full_name, role, phone } = body;
-  if (!email || !full_name || (role !== "driver" && role !== "parent")) {
+  if (!email || !full_name || (role !== "driver" && role !== "parent" && role !== "admin")) {
     return NextResponse.json(
-      { error: "email, full_name, and role ('driver' or 'parent') are required" },
+      { error: "email, full_name, and role ('driver', 'parent', or 'admin') are required" },
       { status: 400 }
     );
   }

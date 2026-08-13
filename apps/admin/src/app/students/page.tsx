@@ -53,6 +53,7 @@ export default function StudentsPage() {
   const [stops, setStops] = useState<StopOption[]>([]);
   const [guardians, setGuardians] = useState<GuardianOption[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -160,9 +161,25 @@ export default function StudentsPage() {
 
   const stopsForRoute = stops.filter((s) => s.route_id === routeId);
 
+  const query = searchQuery.trim().toLowerCase();
+  const filteredStudents =
+    query.length === 0
+      ? students
+      : students.filter((s) => {
+          const studentName = `${s.first_name} ${s.last_name}`.toLowerCase();
+          const guardianNames = s.guardian_student_links.map((l) => l.profiles?.full_name?.toLowerCase() ?? "");
+          return studentName.includes(query) || guardianNames.some((name) => name.includes(query));
+        });
+
   return (
     <AdminShell>
       <h1 className="mb-4 text-2xl font-semibold text-brand-800">Students</h1>
+      <input
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search by student or parent name…"
+        className="mb-4 min-h-control w-full max-w-md rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+      />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[320px_1fr]">
         <Card>
           <h2 className="mb-2 font-medium">New student</h2>
@@ -223,7 +240,7 @@ export default function StudentsPage() {
         </Card>
 
         <div className="flex flex-col gap-2">
-          {students.map((s) => (
+          {filteredStudents.map((s) => (
             <Card key={s.id}>
               <div className="flex items-center justify-between">
                 <div>
@@ -319,6 +336,9 @@ export default function StudentsPage() {
             </Card>
           ))}
           {students.length === 0 ? <p className="text-neutral-500">No students yet.</p> : null}
+          {students.length > 0 && filteredStudents.length === 0 ? (
+            <p className="text-neutral-500">No students or parents match "{searchQuery}".</p>
+          ) : null}
         </div>
       </div>
     </AdminShell>
