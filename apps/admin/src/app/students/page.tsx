@@ -337,7 +337,7 @@ export default function StudentsPage() {
           ))}
           {students.length === 0 ? <p className="text-neutral-500">No students yet.</p> : null}
           {students.length > 0 && filteredStudents.length === 0 ? (
-            <p className="text-neutral-500">No students or parents match "{searchQuery}".</p>
+            <p className="text-neutral-500">No students or parents match &quot;{searchQuery}&quot;.</p>
           ) : null}
         </div>
       </div>
