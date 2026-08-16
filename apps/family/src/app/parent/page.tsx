@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card } from "@tripme/ui";
 import { studentQueries, useSupabaseClient } from "@tripme/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
@@ -17,6 +18,7 @@ interface StudentRow {
 export default function ParentHomePage() {
   const { profile, isLoading } = useRequireRole(["parent"]);
   const supabase = useSupabaseClient();
+  const router = useRouter();
   const [students, setStudents] = useState<StudentRow[]>([]);
 
   useEffect(() => {
@@ -36,9 +38,20 @@ export default function ParentHomePage() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
-        <Link href="/parent/announcements" className="text-sm text-brand-700">
-          Announcements
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/parent/announcements" className="text-sm text-brand-700">
+            Announcements
+          </Link>
+          <button
+            className="text-sm text-neutral-500 hover:text-neutral-800"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.replace("/login");
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
       {profile ? <NotificationOptIn userId={profile.id} /> : null}
       <p className="text-neutral-600">Your children</p>
