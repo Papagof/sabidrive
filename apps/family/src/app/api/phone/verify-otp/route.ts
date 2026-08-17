@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAnonServerSupabaseClient, createServiceRoleSupabaseClient, getUserFromAccessToken } from "@tripme/supabase/server";
 
@@ -7,18 +6,15 @@ export const runtime = "nodejs";
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const MAX_ATTEMPTS = 5;
-
-function hashCode(code: string) {
-  return crypto.createHash("sha256").update(code).digest("hex");
-}
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!;
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN!;
+const TWILIO_VERIFY_SERVICE_SID = process.env.TWILIO_VERIFY_SERVICE_SID!;
 
 interface VerifyOtpBody {
   code?: string;
 }
 
-/** Confirms the most recent SMS code sent to this user and flips profiles.phone_verified. */
+/** Confirms the code Twilio Verify sent to this user's staged phone number and flips profiles.phone_verified. */
 export async function POST(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) {
@@ -45,32 +41,28 @@ export async function POST(req: Request) {
 
   const serviceClient = createServiceRoleSupabaseClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-  const { data: otpRow, error: fetchError } = await serviceClient
-    .from("phone_otp_codes")
-    .select("id, phone, code_hash, expires_at, attempts")
-    .eq("user_id", caller.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
+  const { data: profileRow, error: profileError } = await serviceClient
+    .from("profiles")
+    .select("phone")
+    .eq("id", caller.id)
     .maybeSingle();
 
-  if (fetchError || !otpRow) {
+  if (profileError || !profileRow?.phone) {
     return NextResponse.json({ error: "Request a new code first" }, { status: 400 });
   }
 
-  if (new Date(otpRow.expires_at).getTime() < Date.now()) {
-    return NextResponse.json({ error: "That code has expired — request a new one" }, { status: 400 });
-  }
+  const twilioResponse = await fetch(`https://verify.twilio.com/v2/Services/${TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString("base64")}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({ To: profileRow.phone, Code: code })
+  });
 
-  if (otpRow.attempts >= MAX_ATTEMPTS) {
-    return NextResponse.json({ error: "Too many attempts — request a new code" }, { status: 429 });
-  }
-
-  if (hashCode(code) !== otpRow.code_hash) {
-    await serviceClient
-      .from("phone_otp_codes")
-      .update({ attempts: otpRow.attempts + 1 })
-      .eq("id", otpRow.id);
-    return NextResponse.json({ error: "Incorrect code" }, { status: 400 });
+  const twilioBody = await twilioResponse.json();
+  if (!twilioResponse.ok || twilioBody.status !== "approved") {
+    return NextResponse.json({ error: "Incorrect or expired code" }, { status: 400 });
   }
 
   const { error: updateError } = await serviceClient.from("profiles").update({ phone_verified: true }).eq("id", caller.id);
@@ -78,7 +70,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to verify phone number" }, { status: 500 });
   }
 
-  await serviceClient.from("phone_otp_codes").delete().eq("id", otpRow.id);
-
-  return NextResponse.json({ ok: true, phone: otpRow.phone });
+  return NextResponse.json({ ok: true, phone: profileRow.phone });
 }
