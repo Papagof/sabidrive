@@ -476,6 +476,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          phone_verified: boolean
           role: string
           school_id: string | null
           verification_status: string | null
@@ -487,6 +488,7 @@ export type Database = {
           full_name: string
           id: string
           phone?: string | null
+          phone_verified?: boolean
           role: string
           school_id?: string | null
           verification_status?: string | null
@@ -498,6 +500,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          phone_verified?: boolean
           role?: string
           school_id?: string | null
           verification_status?: string | null
@@ -508,6 +511,44 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_otp_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          phone: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_otp_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

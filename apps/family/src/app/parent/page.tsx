@@ -42,6 +42,9 @@ export default function ParentHomePage() {
           <Link href="/parent/announcements" className="text-sm text-brand-700">
             Announcements
           </Link>
+          <Link href="/account" className="text-sm text-brand-700">
+            Account
+          </Link>
           <button
             className="text-sm text-neutral-500 hover:text-neutral-800"
             onClick={async () => {

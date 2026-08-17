@@ -106,7 +106,7 @@ Per the fixed build decisions, these are deliberately simulated, not real:
 
 - GPS: `packages/gps-sim` interpolates position along a route polyline instead of reading a real tracker.
 - RFID/NFC: replaced by `qrcode.react`-generated student QR codes (admin → Students → Manage) scanned via `@yudiel/react-qr-scanner` in the driver's Scan screen (with a manual token-entry fallback for camera-less environments).
-- SMS: simulated via the `sms_outbox` table/trigger (Phase 2) — no real gateway.
+- SMS notifications: simulated via the `sms_outbox` table/trigger (Phase 2) — no real gateway. (Phone *verification* is the one exception — see "Phone verification & phone login" below, which uses real Twilio SMS by explicit product decision.)
 - CCTV/background-check integrations: still not built.
 
 ## Phase 1 scope
@@ -137,6 +137,17 @@ The push pipeline (`notifications` insert → `dispatch_push_notification` trigg
 Once set, subscribe from the family app (Parent or Driver home → "Enable notifications" — note `next-pwa`'s own service worker is dev-disabled, but `public/push-worker.js` is a separate, always-active registration) and trigger any notification (e.g. an admin announcement) to see a real push.
 
 (Status: the user has added these Edge Function secrets — not yet re-verified end-to-end in this session.)
+
+## Phone verification & phone login (real SMS, manual step required)
+
+Unlike the rest of this app's deliberately-simulated hardware (GPS/RFID/SMS notifications — see "Simulated hardware" below), phone verification sends a **real** SMS one-time code via Twilio, by explicit product decision. Phone login is still password-based — the phone number is only ever used server-side to look up which account's email to authenticate; there's no passwordless/OTP sign-in.
+
+- `supabase/migrations/0021_phone_verification.sql` — adds `profiles.phone_verified`, a partial unique index on `profiles.phone` (so phone→account lookup at login is never ambiguous and one account can't claim a number another account already verified), and a `phone_otp_codes` table (service-role-only, RLS enabled with zero policies). A `before update on profiles` trigger (`protect_phone_verified`) forces `phone`/`phone_verified` back to their old values for any writer that isn't `service_role` — without it, `profiles_update_own` (`0003_rls_policies.sql`) would let a client just set `phone_verified = true` directly and skip the OTP entirely.
+- `apps/family/src/app/api/phone/send-otp` and `.../verify-otp` — the family app's **first server-side code paths** (same bearer-token-verification pattern as the admin app's `invite-user`). `send-otp` stages the phone number, generates a 6-digit code (SHA-256 hashed, 10-minute expiry, 60s cooldown between sends to bound Twilio spend), and calls Twilio's REST API directly via `fetch` (no SDK). `verify-otp` checks the hash + a 5-attempt limit, then flips `phone_verified` via the service-role client.
+- `apps/family/src/app/api/login-with-phone` — public (no bearer token, caller has no session yet). Looks up `profiles` by `phone` where `phone_verified = true` to get the account's email, then calls `signInWithPassword` server-side with an anon-key client. Never returns the resolved email to the client and gives the identical generic "Invalid phone number or password" message whether the phone doesn't exist or the password is wrong, so it can't be used to enumerate which phone numbers have accounts.
+- `apps/family/src/app/account/page.tsx` — shared page for both parent and driver roles (linked as "Account" from both home screens) showing email-verified status (read from `auth.users.email_confirmed_at` — already true for every parent/driver account by construction, since accepting the admin's invite link *is* what confirms email) and the phone verify/change flow.
+
+**Manual step required**: needs a real Twilio account — Account SID, Auth Token, and a Twilio phone number (or Messaging Service SID) capable of sending SMS. Set as server-only env vars in `apps/family/.env.local` (and later Vercel's `family` project, Production scope): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` — plus `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`, which the family app now needs for the first time (same names/values as `apps/admin/.env.local`). This costs money per SMS sent, unlike everything else in this app.
 
 ## Admin-invited accounts (Phase 3)
 

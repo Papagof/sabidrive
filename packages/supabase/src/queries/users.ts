@@ -29,3 +29,49 @@ export async function inviteUser(supabase: TripmeSupabaseClient, input: InviteUs
   }
   return body as { userId: string };
 }
+
+async function authedFetch(supabase: TripmeSupabaseClient, path: string, payload: unknown) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Not signed in");
+
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload)
+  });
+  const body = await response.json();
+  if (!response.ok) {
+    throw new Error(body.error ?? "Request failed");
+  }
+  return body;
+}
+
+/** Sends a real SMS one-time code to verify a phone number (calls the family app's /api/phone/send-otp). */
+export async function sendPhoneOtp(supabase: TripmeSupabaseClient, phone: string): Promise<void> {
+  await authedFetch(supabase, "/api/phone/send-otp", { phone });
+}
+
+/** Confirms the SMS code sent by sendPhoneOtp (calls /api/phone/verify-otp). */
+export async function verifyPhoneOtp(supabase: TripmeSupabaseClient, code: string): Promise<void> {
+  await authedFetch(supabase, "/api/phone/verify-otp", { code });
+}
+
+/**
+ * Signs in with a verified phone number + password (calls the public
+ * /api/login-with-phone route, which resolves phone -> email server-side
+ * and never exposes the email to the client). Caller must pass the tokens
+ * to supabase.auth.setSession() to actually hydrate the browser session.
+ */
+export async function loginWithPhone(phone: string, password: string): Promise<{ access_token: string; refresh_token: string }> {
+  const response = await fetch("/api/login-with-phone", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, password })
+  });
+  const body = await response.json();
+  if (!response.ok) {
+    throw new Error(body.error ?? "Failed to sign in");
+  }
+  return body as { access_token: string; refresh_token: string };
+}

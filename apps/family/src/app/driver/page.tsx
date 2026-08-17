@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
 import { tripQueries, useSupabaseClient } from "@tripme/supabase";
@@ -54,15 +55,20 @@ export default function DriverHomePage() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
-        <button
-          className="text-sm text-neutral-500 hover:text-neutral-800"
-          onClick={async () => {
-            await supabase.auth.signOut();
-            router.replace("/login");
-          }}
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-3">
+          <Link href="/account" className="text-sm text-brand-700">
+            Account
+          </Link>
+          <button
+            className="text-sm text-neutral-500 hover:text-neutral-800"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              router.replace("/login");
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
       {profile ? <NotificationOptIn userId={profile.id} /> : null}
       <Card className="flex flex-col gap-3">

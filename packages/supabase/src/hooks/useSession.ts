@@ -9,6 +9,7 @@ export interface Profile {
   full_name: string;
   email: string | null;
   phone: string | null;
+  phone_verified: boolean;
   role: "parent" | "driver" | "admin" | "student";
   school_id: string | null;
   avatar_url: string | null;
