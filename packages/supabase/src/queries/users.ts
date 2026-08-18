@@ -57,6 +57,23 @@ export async function verifyPhoneOtp(supabase: TripmeSupabaseClient, code: strin
   await authedFetch(supabase, "/api/phone/verify-otp", { code });
 }
 
+export interface GuardianLookupResult {
+  found: boolean;
+  id?: string;
+  full_name?: string;
+}
+
+/**
+ * Looks up an existing parent account by email regardless of which school
+ * it belongs to (calls the admin app's /api/find-guardian-by-email) -- used
+ * to attach a guardian whose other child is at a different school, rather
+ * than trying to invite a duplicate account for an email that already
+ * exists.
+ */
+export async function findGuardianByEmail(supabase: TripmeSupabaseClient, email: string): Promise<GuardianLookupResult> {
+  return (await authedFetch(supabase, "/api/find-guardian-by-email", { email })) as GuardianLookupResult;
+}
+
 /**
  * Signs in with a verified phone number + password (calls the public
  * /api/login-with-phone route, which resolves phone -> email server-side

@@ -9,13 +9,18 @@ interface GuardianStudentRow {
     default_route_id: string | null;
     default_stop_id: string | null;
     qr_token: string;
+    school_id: string;
+    schools: { name: string } | null;
   } | null;
 }
 
+/** A guardian's children, with each child's school name -- lets a parent with kids at different schools tell them apart. */
 export async function getGuardianStudents(supabase: TripmeSupabaseClient, guardianId: string) {
   const { data, error } = await supabase
     .from("guardian_student_links")
-    .select("students(id, first_name, last_name, photo_url, default_route_id, default_stop_id, qr_token)")
+    .select(
+      "students(id, first_name, last_name, photo_url, default_route_id, default_stop_id, qr_token, school_id, schools(name))"
+    )
     .eq("guardian_id", guardianId);
   if (error) throw error;
   return ((data ?? []) as unknown as GuardianStudentRow[]).map((row) => row.students).filter(Boolean);

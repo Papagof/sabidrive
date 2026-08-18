@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Button, Card } from "@tripme/ui";
-import { adminQueries, useSupabaseClient } from "@tripme/supabase";
+import { adminQueries, userQueries, useSupabaseClient } from "@tripme/supabase";
 import { InviteUserForm } from "@/components/InviteUserForm";
 
 const INVITE_NEW_GUARDIAN = "__invite_new_guardian__";
@@ -70,6 +70,10 @@ export default function StudentsPage() {
   const [overrideNotes, setOverrideNotes] = useState("");
   const [isInvitingGuardian, setIsInvitingGuardian] = useState(false);
 
+  const [linkEmail, setLinkEmail] = useState("");
+  const [linkStatus, setLinkStatus] = useState<string | null>(null);
+  const [isLinkingByEmail, setIsLinkingByEmail] = useState(false);
+
   async function refetch() {
     if (!profile?.school_id) return;
     const studentData = await adminQueries.getSchoolStudents(supabase, profile.school_id);
@@ -133,8 +137,32 @@ export default function StudentsPage() {
     setOverrideRelationship("");
     setOverrideNotes("");
     setIsInvitingGuardian(false);
+    setLinkEmail("");
+    setLinkStatus(null);
     const rows = await adminQueries.getPickupOverrides(supabase, studentId);
     setOverrides(rows as unknown as PickupOverrideRow[]);
+  }
+
+  async function handleLinkGuardianByEmail(studentId: string) {
+    const email = linkEmail.trim();
+    if (!email) return;
+    setIsLinkingByEmail(true);
+    setLinkStatus(null);
+    try {
+      const result = await userQueries.findGuardianByEmail(supabase, email);
+      if (!result.found || !result.id) {
+        setLinkStatus("No existing account with that email — use “+ Invite new guardian…” above instead.");
+        return;
+      }
+      await adminQueries.linkGuardianToStudent(supabase, result.id, studentId);
+      setLinkStatus(`Linked ${result.full_name}.`);
+      setLinkEmail("");
+      await refetch();
+    } catch (err) {
+      setLinkStatus(err instanceof Error ? err.message : "Failed to link guardian");
+    } finally {
+      setIsLinkingByEmail(false);
+    }
   }
 
   async function handleGuardianInvited(studentId: string, userId: string) {
@@ -292,6 +320,25 @@ export default function StudentsPage() {
                         onInvited={(user) => handleGuardianInvited(s.id, user.userId)}
                       />
                     ) : null}
+
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs text-neutral-500">
+                        Or link a guardian who already has an account at another school:
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={linkEmail}
+                          onChange={(e) => setLinkEmail(e.target.value)}
+                          placeholder="Guardian's email"
+                          className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                        />
+                        <Button variant="secondary" disabled={isLinkingByEmail} onClick={() => handleLinkGuardianByEmail(s.id)}>
+                          {isLinkingByEmail ? "Linking..." : "Find & link"}
+                        </Button>
+                      </div>
+                      {linkStatus ? <p className="text-xs text-neutral-500">{linkStatus}</p> : null}
+                    </div>
 
                     <div className="rounded-xl border border-neutral-200 p-3">
                       <p className="mb-2 text-sm font-medium">Pickup authorization</p>
