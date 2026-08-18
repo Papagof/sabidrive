@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Banner, Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
 import type { MapStop } from "@tripme/ui";
 import { studentQueries, tripQueries, useNotifications, useSupabaseClient, useTripLocation } from "@tripme/supabase";
-import { useRequireRole } from "@/lib/useRequireRole";
+import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 const TripMap = dynamic(() => import("@tripme/ui").then((m) => m.TripMap), { ssr: false });
 
@@ -35,7 +35,7 @@ interface DriverContact {
 
 export default function StudentTrackingPage() {
   const { studentId } = useParams<{ studentId: string }>();
-  const { profile, isLoading: isAuthLoading } = useRequireRole(["parent"]);
+  const { profile, isLoading: isAuthLoading } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
   const router = useRouter();
 

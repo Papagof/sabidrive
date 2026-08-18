@@ -16,14 +16,17 @@ interface LookupBody {
 }
 
 /**
- * Looks up an existing parent account by email, regardless of which school
- * it belongs to -- used to attach an already-registered guardian (e.g. one
+ * Looks up an existing account by email, regardless of role or which
+ * school it belongs to -- used to attach an already-registered guardian
+ * (e.g. an admin whose own child attends a different school, or a parent
  * whose other child attends a different school) to a student here, instead
  * of trying (and failing, since Supabase Auth emails are globally unique)
- * to invite a duplicate account. Deliberately returns only enough to
- * confirm identity (id + name) -- never phone, other children, or which
- * other schools they belong to -- so this can't be used to fish for
- * account details belonging to another school's families.
+ * to invite a duplicate account. Being a guardian is independent of an
+ * account's primary role (0024_cross_role_guardians.sql). Deliberately
+ * returns only enough to confirm identity (id + name) -- never phone,
+ * other children, or which other schools/roles they belong to -- so this
+ * can't be used to fish for account details belonging to another school's
+ * families.
  */
 export async function POST(req: Request) {
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -60,12 +63,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "email is required" }, { status: 400 });
   }
 
-  const { data: guardian } = await serviceClient
-    .from("profiles")
-    .select("id, full_name")
-    .eq("email", email)
-    .eq("role", "parent")
-    .maybeSingle();
+  const { data: guardian } = await serviceClient.from("profiles").select("id, full_name").eq("email", email).maybeSingle();
 
   if (!guardian) {
     return NextResponse.json({ found: false });

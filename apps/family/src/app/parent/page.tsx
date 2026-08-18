@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@tripme/ui";
 import { studentQueries, useSupabaseClient } from "@tripme/supabase";
-import { useRequireRole } from "@/lib/useRequireRole";
+import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
 
 interface StudentRow {
@@ -18,7 +18,7 @@ interface StudentRow {
 }
 
 export default function ParentHomePage() {
-  const { profile, isLoading } = useRequireRole(["parent"]);
+  const { profile, isLoading } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [students, setStudents] = useState<StudentRow[]>([]);

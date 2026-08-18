@@ -4,12 +4,12 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Banner, Button, Card, StatusPill } from "@tripme/ui";
 import { useSupabaseClient, userQueries } from "@tripme/supabase";
-import { useRequireRole } from "@/lib/useRequireRole";
+import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 type Step = "idle" | "entering_phone" | "code_sent";
 
 export default function AccountPage() {
-  const { profile, isLoading } = useRequireRole(["parent", "driver"]);
+  const { profile, isLoading } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
   const [emailConfirmed, setEmailConfirmed] = useState(false);
 
