@@ -111,9 +111,6 @@ export default function LoginPage() {
           </Button>
         </form>
       </Card>
-      <p className="mt-4 text-center text-sm text-neutral-500">
-        Demo: driver@tripme.dev / parent1@tripme.dev — password TripmeDemo123!
-      </p>
     </main>
   );
 }
