@@ -62,8 +62,7 @@ export default function LoginPage() {
           </Button>
         </form>
       </Card>
-      <p className="mt-4 text-center text-sm text-neutral-500">Demo: admin@tripme.dev — password TripmeDemo123!</p>
-      <p className="mt-2 text-center text-sm text-neutral-500">
+      <p className="mt-4 text-center text-sm text-neutral-500">
         New school? <Link href="/signup" className="text-brand-700">Create an account</Link>
       </p>
     </main>
