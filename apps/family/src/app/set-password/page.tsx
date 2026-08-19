@@ -66,8 +66,7 @@ export default function SetPasswordPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-      <h1 className="mb-1 text-2xl font-semibold text-brand-800">Welcome to Tripme</h1>
-      <p className="mb-6 text-neutral-600">Set a password for {session.user.email}.</p>
+      <h1 className="mb-6 text-neutral-600">Set a password for {session.user.email}.</h1>
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1">

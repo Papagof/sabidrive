@@ -26,7 +26,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <span className="text-lg font-semibold text-brand-800">Tripme Admin</span>
+          <span className="text-sm font-medium text-neutral-500">Admin</span>
           <nav className="flex gap-1">
             {NAV_ITEMS.map((item) => (
               <Link

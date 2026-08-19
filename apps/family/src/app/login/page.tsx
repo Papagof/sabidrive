@@ -44,8 +44,7 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-      <h1 className="mb-1 text-2xl font-semibold text-brand-800">Tripme</h1>
-      <p className="mb-6 text-neutral-600">Sign in to track your child&apos;s bus.</p>
+      <h1 className="mb-6 text-neutral-600">Sign in to track your child&apos;s bus.</h1>
       <Card>
         <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1">
           <button
