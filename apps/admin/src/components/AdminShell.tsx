@@ -1,9 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSupabaseClient } from "@tripme/supabase";
+import { adminQueries, useSession, useSupabaseClient } from "@tripme/supabase";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Fleet map" },
@@ -21,12 +21,21 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const supabase = useSupabaseClient();
   const router = useRouter();
+  const { profile } = useSession();
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!profile?.school_id) return;
+    adminQueries.getSchool(supabase, profile.school_id).then((school) => {
+      setSchoolName((school as unknown as { name: string }).name);
+    });
+  }, [supabase, profile?.school_id]);
 
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <span className="text-sm font-medium text-neutral-500">Admin</span>
+          <span className="text-sm font-medium text-neutral-500">{schoolName ?? "Admin"}</span>
           <nav className="flex gap-1">
             {NAV_ITEMS.map((item) => (
               <Link
