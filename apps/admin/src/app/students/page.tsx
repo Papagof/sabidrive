@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Button, Card } from "@tripme/ui";
+import { Banner, Button, Card } from "@tripme/ui";
 import { adminQueries, userQueries, useSupabaseClient } from "@tripme/supabase";
 import { InviteUserForm } from "@/components/InviteUserForm";
 
@@ -71,7 +71,7 @@ export default function StudentsPage() {
   const [isInvitingGuardian, setIsInvitingGuardian] = useState(false);
 
   const [linkEmail, setLinkEmail] = useState("");
-  const [linkStatus, setLinkStatus] = useState<string | null>(null);
+  const [linkStatus, setLinkStatus] = useState<{ tone: "info" | "caution"; message: string } | null>(null);
   const [isLinkingByEmail, setIsLinkingByEmail] = useState(false);
 
   async function refetch() {
@@ -151,15 +151,23 @@ export default function StudentsPage() {
     try {
       const result = await userQueries.findGuardianByEmail(supabase, email);
       if (!result.found || !result.id) {
-        setLinkStatus("No existing account with that email — use “+ Invite new guardian…” above instead.");
+        setLinkStatus({
+          tone: "caution",
+          message: "No existing account with that email — use “+ Invite new guardian…” above instead."
+        });
         return;
       }
       await adminQueries.linkGuardianToStudent(supabase, result.id, studentId);
-      setLinkStatus(`Linked ${result.full_name}.`);
+      setLinkStatus({ tone: "info", message: `Linked ${result.full_name} as a guardian of this student.` });
       setLinkEmail("");
       await refetch();
     } catch (err) {
-      setLinkStatus(err instanceof Error ? err.message : "Failed to link guardian");
+      const message = err instanceof Error ? err.message : "Failed to link guardian";
+      setLinkStatus(
+        message.includes("duplicate key") || message.includes("already exists")
+          ? { tone: "info", message: "Already linked as a guardian of this student." }
+          : { tone: "caution", message }
+      );
     } finally {
       setIsLinkingByEmail(false);
     }
@@ -337,7 +345,9 @@ export default function StudentsPage() {
                           {isLinkingByEmail ? "Linking..." : "Find & link"}
                         </Button>
                       </div>
-                      {linkStatus ? <p className="text-xs text-neutral-500">{linkStatus}</p> : null}
+                      {linkStatus ? (
+                        <Banner tone={linkStatus.tone} title={linkStatus.message} className="py-2 text-sm" />
+                      ) : null}
                     </div>
 
                     <div className="rounded-xl border border-neutral-200 p-3">
