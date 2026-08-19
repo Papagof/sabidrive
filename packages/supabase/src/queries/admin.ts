@@ -27,15 +27,44 @@ export async function setDriverVerification(supabase: TripmeSupabaseClient, driv
   if (error) throw error;
 }
 
+interface StaffRow {
+  id: string;
+  full_name: string;
+  email: string | null;
+  role: string;
+  verification_status: string | null;
+}
+
+/**
+ * Admins/drivers belong to exactly one school, so a direct school_id filter
+ * is enough for them. Guardians are different -- a guardian can be linked
+ * to a student at a school other than the one their own account was first
+ * invited into (0024_cross_role_guardians.sql), so a same-school-only
+ * filter would miss them even though they're now RLS-visible
+ * (profiles_select_admin_of_linked_student). Union same-school parents
+ * with guardian_student_links-linked guardians of this school's students,
+ * deduped by id.
+ */
 export async function getSchoolStaffAndGuardians(supabase: TripmeSupabaseClient, schoolId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, role, verification_status")
-    .eq("school_id", schoolId)
-    .in("role", ["admin", "driver", "parent"])
-    .order("role")
-    .order("full_name");
-  if (error) throw error;
+  const [staffResult, sameSchoolGuardiansResult, linkedGuardiansResult] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, email, role, verification_status").eq("school_id", schoolId).in("role", ["admin", "driver"]),
+    supabase.from("profiles").select("id, full_name, email, role, verification_status").eq("school_id", schoolId).eq("role", "parent"),
+    supabase.from("students").select("guardian_student_links(profiles:guardian_id(id, full_name, email, role, verification_status))").eq("school_id", schoolId)
+  ]);
+  if (staffResult.error) throw staffResult.error;
+  if (sameSchoolGuardiansResult.error) throw sameSchoolGuardiansResult.error;
+  if (linkedGuardiansResult.error) throw linkedGuardiansResult.error;
+
+  const linkedGuardians = (
+    linkedGuardiansResult.data as unknown as { guardian_student_links: { profiles: StaffRow | null }[] }[]
+  ).flatMap((s) => s.guardian_student_links.map((l) => l.profiles).filter((p): p is StaffRow => p !== null));
+
+  const byId = new Map<string, StaffRow>();
+  for (const row of [...(staffResult.data as StaffRow[]), ...(sameSchoolGuardiansResult.data as StaffRow[]), ...linkedGuardians]) {
+    byId.set(row.id, row);
+  }
+
+  const data = Array.from(byId.values()).sort((a, b) => a.role.localeCompare(b.role) || a.full_name.localeCompare(b.full_name));
   return data;
 }
 
