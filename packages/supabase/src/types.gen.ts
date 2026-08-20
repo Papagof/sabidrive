@@ -420,6 +420,67 @@ export type Database = {
           },
         ]
       }
+      pickup_codes: {
+        Row: {
+          consumed_at: string | null
+          consumed_trip_id: string | null
+          created_at: string
+          event_type: string
+          expires_at: string
+          guardian_id: string
+          id: string
+          phone: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          consumed_trip_id?: string | null
+          created_at?: string
+          event_type: string
+          expires_at?: string
+          guardian_id: string
+          id?: string
+          phone: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          consumed_trip_id?: string | null
+          created_at?: string
+          event_type?: string
+          expires_at?: string
+          guardian_id?: string
+          id?: string
+          phone?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pickup_codes_consumed_trip_id_fkey"
+            columns: ["consumed_trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pickup_codes_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pickup_codes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pickup_overrides: {
         Row: {
           authorized_name: string
@@ -929,7 +990,7 @@ export type Database = {
     Functions: {
       can_view_trip: { Args: { target_trip_id: string }; Returns: boolean }
       check_in: {
-        Args: { p_event_type?: string; p_qr_token: string; p_trip_id: string }
+        Args: { p_event_type?: string; p_method?: string; p_qr_token: string; p_trip_id: string }
         Returns: undefined
       }
       create_announcement: {

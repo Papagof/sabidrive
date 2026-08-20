@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Banner, Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
 import type { MapStop } from "@tripme/ui";
-import { studentQueries, tripQueries, useNotifications, useSupabaseClient, useTripLocation } from "@tripme/supabase";
+import { studentQueries, tripQueries, userQueries, useNotifications, useSupabaseClient, useTripLocation } from "@tripme/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 const TripMap = dynamic(() => import("@tripme/ui").then((m) => m.TripMap), { ssr: false });
@@ -44,6 +45,9 @@ export default function StudentTrackingPage() {
   const [tripId, setTripId] = useState<string | null>(null);
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
   const [driverContact, setDriverContact] = useState<DriverContact | null>(null);
+  const [pendingCodeType, setPendingCodeType] = useState<"board" | "alight" | null>(null);
+  const [codeStatus, setCodeStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
+  const [codeCooldown, setCodeCooldown] = useState<"board" | "alight" | null>(null);
 
   const { current } = useTripLocation(tripId);
   const { notifications } = useNotifications(profile?.id ?? null);
@@ -111,6 +115,21 @@ export default function StudentTrackingPage() {
     return () => void supabase.removeChannel(channel);
   }, [supabase, tripId, student?.default_stop_id]);
 
+  async function handleRequestCode(eventType: "board" | "alight") {
+    setPendingCodeType(eventType);
+    setCodeStatus(null);
+    try {
+      await userQueries.requestPickupCode(supabase, studentId, eventType);
+      setCodeStatus({ kind: "success", message: "Code sent — give it to the driver when the bus arrives." });
+      setCodeCooldown(eventType);
+      setTimeout(() => setCodeCooldown(null), 30_000);
+    } catch (err) {
+      setCodeStatus({ kind: "error", message: err instanceof Error ? err.message : "Failed to send code" });
+    } finally {
+      setPendingCodeType(null);
+    }
+  }
+
   if (isAuthLoading || !student) return null;
 
   const driver = driverContact?.buses?.driver;
@@ -157,6 +176,43 @@ export default function StudentTrackingPage() {
           ) : null}
         </Card>
       ) : null}
+
+      <Card className="flex flex-col gap-3">
+        <div>
+          <p className="font-medium">Home pickup / drop-off code</p>
+          <p className="text-sm text-neutral-500">
+            Get a one-time code texted to your phone, then give it to the driver instead of a QR scan when they arrive at
+            home.
+          </p>
+        </div>
+        {profile && !profile.phone_verified ? (
+          <Banner tone="caution" title="Verify your phone number to use this">
+            <Link href="/account" className="underline">
+              Go to Account
+            </Link>
+          </Banner>
+        ) : (
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              disabled={pendingCodeType !== null || codeCooldown === "board"}
+              onClick={() => handleRequestCode("board")}
+            >
+              {pendingCodeType === "board" ? "Sending..." : codeCooldown === "board" ? "Code sent" : "Text pickup code"}
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex-1"
+              disabled={pendingCodeType !== null || codeCooldown === "alight"}
+              onClick={() => handleRequestCode("alight")}
+            >
+              {pendingCodeType === "alight" ? "Sending..." : codeCooldown === "alight" ? "Code sent" : "Text drop-off code"}
+            </Button>
+          </div>
+        )}
+        {codeStatus ? <Banner tone={codeStatus.kind === "success" ? "info" : "caution"} title={codeStatus.message} /> : null}
+      </Card>
 
       <div>
         <h2 className="mb-2 text-lg font-medium">Today&apos;s timeline</h2>

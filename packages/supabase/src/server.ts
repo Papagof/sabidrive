@@ -24,6 +24,19 @@ export function createAnonServerSupabaseClient(url: string, anonKey: string): Tr
   });
 }
 
+/**
+ * Anon-key client whose PostgREST/RPC calls run as the user behind
+ * `accessToken` (auth.uid() resolves to them inside SECURITY DEFINER
+ * functions) -- for a Route Handler that needs to call an RPC as the caller
+ * rather than as service-role.
+ */
+export function createUserScopedServerSupabaseClient(url: string, anonKey: string, accessToken: string): TripmeSupabaseClient {
+  return createClient<Database>(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } }
+  });
+}
+
 /** Resolves the caller behind a bearer token, or null if it's invalid/expired. */
 export async function getUserFromAccessToken(
   anonClient: TripmeSupabaseClient,

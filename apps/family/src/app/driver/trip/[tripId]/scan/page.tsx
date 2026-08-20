@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import { Button, Banner, Card } from "@tripme/ui";
-import { studentQueries, tripQueries, useSupabaseClient } from "@tripme/supabase";
+import { studentQueries, tripQueries, userQueries, useSupabaseClient } from "@tripme/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
 
 export default function ScanPage() {
@@ -18,6 +18,8 @@ export default function ScanPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [pendingPickup, setPendingPickup] = useState<{ qrToken: string; info: studentQueries.PickupInfo } | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [smsCode, setSmsCode] = useState("");
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
 
   async function submitCheckIn(qrToken: string) {
     setIsPaused(true);
@@ -78,6 +80,27 @@ export default function ScanPage() {
   function handleManualSubmit(e: FormEvent) {
     e.preventDefault();
     if (manualToken.trim()) void submitCheckIn(manualToken.trim());
+  }
+
+  async function handleSmsCodeSubmit(e: FormEvent) {
+    e.preventDefault();
+    const code = smsCode.trim();
+    if (!code) return;
+    setIsVerifyingCode(true);
+    setIsPaused(true);
+    try {
+      const result = await userQueries.verifyPickupCode(supabase, tripId, eventType, code);
+      setStatus({
+        kind: "success",
+        message: `Checked in ${result.studentName} (${eventType})${result.guardianName ? ` — code from ${result.guardianName}` : ""}.`
+      });
+      setSmsCode("");
+    } catch (err) {
+      setStatus({ kind: "error", message: err instanceof Error ? err.message : "Invalid or expired code" });
+    } finally {
+      setIsVerifyingCode(false);
+      setTimeout(() => setIsPaused(false), 1500);
+    }
   }
 
   if (isAuthLoading) return null;
@@ -163,6 +186,26 @@ export default function ScanPage() {
                   className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-base focus:border-brand-500 focus:outline-none"
                 />
                 <Button type="submit">Check in</Button>
+              </div>
+            </form>
+          </Card>
+
+          <Card>
+            <form onSubmit={handleSmsCodeSubmit} className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-neutral-700">
+                Home {eventType === "board" ? "pickup" : "drop-off"} — enter the parent&apos;s SMS code
+              </label>
+              <div className="flex gap-2">
+                <input
+                  inputMode="numeric"
+                  value={smsCode}
+                  onChange={(e) => setSmsCode(e.target.value)}
+                  placeholder="123456"
+                  className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-base focus:border-brand-500 focus:outline-none"
+                />
+                <Button type="submit" disabled={isVerifyingCode}>
+                  {isVerifyingCode ? "Checking..." : "Check in"}
+                </Button>
               </div>
             </form>
           </Card>

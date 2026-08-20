@@ -57,6 +57,39 @@ export async function verifyPhoneOtp(supabase: TripmeSupabaseClient, code: strin
   await authedFetch(supabase, "/api/phone/verify-otp", { code });
 }
 
+/**
+ * Sends a real SMS one-time code to the signed-in guardian's verified phone,
+ * authorizing a student's next home boarding or home drop-off (calls the
+ * family app's /api/pickup-code/request). The driver enters this code on
+ * the Scan screen instead of scanning the student's QR at that stop.
+ */
+export async function requestPickupCode(
+  supabase: TripmeSupabaseClient,
+  studentId: string,
+  eventType: "board" | "alight"
+): Promise<void> {
+  await authedFetch(supabase, "/api/pickup-code/request", { studentId, eventType });
+}
+
+export interface VerifyPickupCodeResult {
+  studentName: string;
+  guardianName: string | null;
+}
+
+/**
+ * Called from the driver's Scan screen with a parent-supplied SMS code
+ * (calls /api/pickup-code/verify) -- resolves the code to a student on this
+ * trip's roster and performs the board/alight check-in server-side.
+ */
+export async function verifyPickupCode(
+  supabase: TripmeSupabaseClient,
+  tripId: string,
+  eventType: "board" | "alight",
+  code: string
+): Promise<VerifyPickupCodeResult> {
+  return (await authedFetch(supabase, "/api/pickup-code/verify", { tripId, eventType, code })) as VerifyPickupCodeResult;
+}
+
 export interface GuardianLookupResult {
   found: boolean;
   id?: string;
