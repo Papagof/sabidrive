@@ -46,7 +46,7 @@ Two separate Vercel projects under the `godfrey5` team, one per app — matches 
 
 Each project's **Root Directory** is set (via the Vercel API/dashboard, `Settings → General → Root Directory`) to `apps/family` / `apps/admin` respectively — required for Vercel to correctly detect the pnpm workspace and run `pnpm install` at the true monorepo root rather than treating the subfolder as an isolated project (a plain `vercel deploy` run *from inside* `apps/family` uploads only that subfolder and fails with `npm install` errors — confirmed the hard way).
 
-**Both projects are Git-connected to `Papagof/tripme`** (production branch `main`) via the Vercel GitHub App — every push to `main` auto-deploys both `family` and `admin` in parallel, each building from its own Root Directory. No CLI step needed for normal deploys.
+**Both projects are Git-connected to `Papagof/sabidrive`** (production branch `main`) via the Vercel GitHub App — every push to `main` auto-deploys both `family` and `admin` in parallel, each building from its own Root Directory. No CLI step needed for normal deploys.
 
 **Manual CLI redeploy** (fallback — e.g. to redeploy without a new commit): each app has its own `apps/*/​.vercel/project.json` (gitignored) from `vercel link`. Because of the Root-Directory-detection issue above, a manual deploy must happen with the **monorepo root as CWD**, using a `.vercel/project.json` at the repo root copied from the target app's — e.g. to redeploy family:
 ```
