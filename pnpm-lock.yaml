@@ -32,10 +32,10 @@ importers:
 
   apps/admin:
     dependencies:
-      '@tripme/supabase':
+      '@sabidrive/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
-      '@tripme/ui':
+      '@sabidrive/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       leaflet:
@@ -54,7 +54,7 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
     devDependencies:
-      '@tripme/config':
+      '@sabidrive/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -87,10 +87,10 @@ importers:
 
   apps/family:
     dependencies:
-      '@tripme/supabase':
+      '@sabidrive/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase
-      '@tripme/ui':
+      '@sabidrive/ui':
         specifier: workspace:*
         version: link:../../packages/ui
       '@yudiel/react-qr-scanner':
@@ -112,7 +112,7 @@ importers:
       '@ducanh2912/next-pwa':
         specifier: ^10.2.9
         version: 10.2.9(next@14.2.35(@babel/core@7.29.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(webpack@5.109.2(postcss@8.5.26))
-      '@tripme/config':
+      '@sabidrive/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -161,7 +161,7 @@ importers:
       '@capacitor/cli':
         specifier: ^6.2.0
         version: 6.2.1
-      '@tripme/config':
+      '@sabidrive/config':
         specifier: workspace:*
         version: link:../../packages/config
       sharp:
@@ -175,17 +175,17 @@ importers:
 
   packages/gps-sim:
     dependencies:
+      '@sabidrive/supabase':
+        specifier: workspace:*
+        version: link:../supabase
       '@supabase/supabase-js':
         specifier: ^2.45.0
         version: 2.112.2
-      '@tripme/supabase':
-        specifier: workspace:*
-        version: link:../supabase
       dotenv:
         specifier: ^16.4.0
         version: 16.6.1
     devDependencies:
-      '@tripme/config':
+      '@sabidrive/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -210,7 +210,7 @@ importers:
         specifier: ^18.3.0
         version: 18.3.1
     devDependencies:
-      '@tripme/config':
+      '@sabidrive/config':
         specifier: workspace:*
         version: link:../config
       '@types/react':
@@ -238,7 +238,7 @@ importers:
         specifier: ^4.2.1
         version: 4.2.1(leaflet@1.9.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
-      '@tripme/config':
+      '@sabidrive/config':
         specifier: workspace:*
         version: link:../config
       '@types/leaflet':

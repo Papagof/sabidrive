@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, type Profile } from "@tripme/supabase";
+import { useSession, type Profile } from "@sabidrive/supabase";
 
 /** Admin app is single-role: redirects to /login unless signed in as an admin. */
 export function useRequireAdmin() {

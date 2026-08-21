@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Banner, Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
-import type { MapStop } from "@tripme/ui";
-import { studentQueries, tripQueries, userQueries, useNotifications, useSupabaseClient, useTripLocation } from "@tripme/supabase";
+import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import type { MapStop } from "@sabidrive/ui";
+import { studentQueries, tripQueries, userQueries, useNotifications, useSupabaseClient, useTripLocation } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
-const TripMap = dynamic(() => import("@tripme/ui").then((m) => m.TripMap), { ssr: false });
+const TripMap = dynamic(() => import("@sabidrive/ui").then((m) => m.TripMap), { ssr: false });
 
 interface Student {
   id: string;

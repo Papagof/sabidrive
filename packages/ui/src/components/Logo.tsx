@@ -3,7 +3,7 @@ import clsx from "clsx";
 export interface LogoProps {
   size?: "sm" | "md" | "lg";
   className?: string;
-  /** Hide the "TripMe" wordmark and show just the bus glyph. */
+  /** Hide the "SabiDrive" wordmark and show just the bus glyph. */
   iconOnly?: boolean;
 }
 
@@ -13,7 +13,7 @@ const sizeClasses = {
   lg: { icon: "h-11 w-11", text: "text-3xl" }
 };
 
-/** The TripMe wordmark + bus glyph -- matches apps/family/public/icons/icon.svg, the app's one source icon image. */
+/** The SabiDrive wordmark + bus glyph -- matches apps/family/public/icons/icon.svg, the app's one source icon image. */
 export function Logo({ size = "md", className, iconOnly = false }: LogoProps) {
   const { icon, text } = sizeClasses[size];
   return (
@@ -30,7 +30,7 @@ export function Logo({ size = "md", className, iconOnly = false }: LogoProps) {
         <rect x="43" y="38" width="14" height="12" rx="2" fill="#3866d6" />
         <rect x="62" y="38" width="14" height="12" rx="2" fill="#3866d6" />
       </svg>
-      {iconOnly ? null : <span className={clsx("font-semibold tracking-tight text-brand-800", text)}>TripMe</span>}
+      {iconOnly ? null : <span className={clsx("font-semibold tracking-tight text-brand-800", text)}>SabiDrive</span>}
     </span>
   );
 }

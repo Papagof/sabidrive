@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Logo } from "@tripme/ui";
+import { Logo } from "@sabidrive/ui";
 import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tripme Admin",
+  title: "SabiDrive Admin",
   description: "Fleet, routes, and attendance for school transport coordinators."
 };
 

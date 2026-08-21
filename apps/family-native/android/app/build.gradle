@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.tripme.family"
+    namespace "com.sabidrive.family"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.tripme.family"
+        applicationId "com.sabidrive.family"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

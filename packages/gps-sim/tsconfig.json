@@ -1,5 +1,5 @@
 {
-  "extends": "@tripme/config/tsconfig.base.json",
+  "extends": "@sabidrive/config/tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"]
   },

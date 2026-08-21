@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card } from "@tripme/ui";
-import { studentQueries, useSupabaseClient } from "@tripme/supabase";
+import { Card } from "@sabidrive/ui";
+import { studentQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
 

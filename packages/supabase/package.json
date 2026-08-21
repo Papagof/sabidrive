@@ -1,5 +1,5 @@
 {
-  "name": "@tripme/supabase",
+  "name": "@sabidrive/supabase",
   "private": true,
   "version": "0.1.0",
   "main": "src/index.ts",
@@ -21,7 +21,7 @@
     "@tanstack/react-query": "^5.59.0"
   },
   "devDependencies": {
-    "@tripme/config": "workspace:*",
+    "@sabidrive/config": "workspace:*",
     "@types/react": "^18.3.0",
     "typescript": "^5.6.0"
   }

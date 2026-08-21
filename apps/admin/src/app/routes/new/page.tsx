@@ -5,11 +5,11 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Banner, Button, Card } from "@tripme/ui";
-import type { MapPoint } from "@tripme/ui";
-import { adminQueries, useSupabaseClient } from "@tripme/supabase";
+import { Banner, Button, Card } from "@sabidrive/ui";
+import type { MapPoint } from "@sabidrive/ui";
+import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
 
-const ClickToAddMap = dynamic(() => import("@tripme/ui").then((m) => m.ClickToAddMap), { ssr: false });
+const ClickToAddMap = dynamic(() => import("@sabidrive/ui").then((m) => m.ClickToAddMap), { ssr: false });
 
 export default function NewRoutePage() {
   const { profile, isLoading } = useRequireAdmin();

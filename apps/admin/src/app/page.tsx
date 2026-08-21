@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@tripme/supabase";
+import { useSession } from "@sabidrive/supabase";
 
 export default function RootPage() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function RootPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center">
-      <p className="text-neutral-500">Loading Tripme Admin…</p>
+      <p className="text-neutral-500">Loading SabiDrive Admin…</p>
     </main>
   );
 }

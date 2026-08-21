@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { adminQueries, useSession, useSupabaseClient } from "@tripme/supabase";
+import { adminQueries, useSession, useSupabaseClient } from "@sabidrive/supabase";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Fleet map" },

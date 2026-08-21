@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, type Profile } from "@tripme/supabase";
+import { useSession, type Profile } from "@sabidrive/supabase";
 
 /** Redirects to /login (no session) or the correct home (wrong role) once loading settles. */
 export function useRequireRole(allowedRoles: Profile["role"][]) {

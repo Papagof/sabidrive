@@ -1,4 +1,4 @@
-import { pushQueries, type TripmeSupabaseClient } from "@tripme/supabase";
+import { pushQueries, type SabiDriveSupabaseClient } from "@sabidrive/supabase";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
@@ -12,7 +12,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 export type PushSubscribeResult = "subscribed" | "unsupported" | "denied" | "error";
 
 /** Registers the standalone push-worker.js, subscribes, and saves it for `userId`. */
-export async function subscribeToPush(supabase: TripmeSupabaseClient, userId: string): Promise<PushSubscribeResult> {
+export async function subscribeToPush(supabase: SabiDriveSupabaseClient, userId: string): Promise<PushSubscribeResult> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !VAPID_PUBLIC_KEY) {
     return "unsupported";
   }

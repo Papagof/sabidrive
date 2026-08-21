@@ -1,5 +1,5 @@
 {
-  "name": "@tripme/family",
+  "name": "@sabidrive/family",
   "private": true,
   "version": "0.1.0",
   "scripts": {
@@ -10,8 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tripme/supabase": "workspace:*",
-    "@tripme/ui": "workspace:*",
+    "@sabidrive/supabase": "workspace:*",
+    "@sabidrive/ui": "workspace:*",
     "@yudiel/react-qr-scanner": "^2.0.8",
     "leaflet": "^1.9.4",
     "next": "^14.2.15",
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
-    "@tripme/config": "workspace:*",
+    "@sabidrive/config": "workspace:*",
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",

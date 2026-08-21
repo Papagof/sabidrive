@@ -13,7 +13,7 @@
  */
 import { config } from "dotenv";
 import { resolve } from "node:path";
-import { createServiceRoleSupabaseClient } from "@tripme/supabase/server";
+import { createServiceRoleSupabaseClient } from "@sabidrive/supabase/server";
 import { advanceTrip, computeEtaMinutes } from "./engine";
 import {
   cumulativeDistancesM,

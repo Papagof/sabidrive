@@ -1,4 +1,4 @@
--- Core Tripme schema (Phase 1). Single-school assumption is not hard-coded here;
+-- Core SabiDrive schema (Phase 1). Single-school assumption is not hard-coded here;
 -- it's just what Phase 1 seed data + UI exercise.
 
 create table public.schools (

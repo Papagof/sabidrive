@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAnonServerSupabaseClient, createServiceRoleSupabaseClient, getUserFromAccessToken } from "@tripme/supabase/server";
+import { createAnonServerSupabaseClient, createServiceRoleSupabaseClient, getUserFromAccessToken } from "@sabidrive/supabase/server";
 
 // Node runtime (not edge) — needs the service-role key.
 export const runtime = "nodejs";

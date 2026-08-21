@@ -1,4 +1,4 @@
-import type { TripmeSupabaseClient } from "../client";
+import type { SabiDriveSupabaseClient } from "../client";
 
 export interface SignUpSchoolInput {
   school_name: string;
@@ -16,7 +16,7 @@ export interface SignUpSchoolInput {
  * browser in with the same credentials (the route has no way to hand back
  * a session token directly).
  */
-export async function signUpSchool(supabase: TripmeSupabaseClient, input: SignUpSchoolInput): Promise<void> {
+export async function signUpSchool(supabase: SabiDriveSupabaseClient, input: SignUpSchoolInput): Promise<void> {
   const response = await fetch("/api/signup-school", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

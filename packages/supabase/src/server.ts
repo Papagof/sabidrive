@@ -1,13 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types.gen";
-import type { TripmeSupabaseClient } from "./client";
+import type { SabiDriveSupabaseClient } from "./client";
 
 /**
  * Service-role client — bypasses RLS entirely. Only for trusted server-side
  * contexts: the local GPS simulator (packages/gps-sim) and the seed script
  * (scripts/seed.ts). Never import this into browser bundle code.
  */
-export function createServiceRoleSupabaseClient(url: string, serviceRoleKey: string): TripmeSupabaseClient {
+export function createServiceRoleSupabaseClient(url: string, serviceRoleKey: string): SabiDriveSupabaseClient {
   return createClient<Database>(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -18,7 +18,7 @@ export function createServiceRoleSupabaseClient(url: string, serviceRoleKey: str
  * Handler verifying a bearer token passed by the browser) — like the
  * browser client but without assuming `window`/localStorage exist.
  */
-export function createAnonServerSupabaseClient(url: string, anonKey: string): TripmeSupabaseClient {
+export function createAnonServerSupabaseClient(url: string, anonKey: string): SabiDriveSupabaseClient {
   return createClient<Database>(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
@@ -30,7 +30,7 @@ export function createAnonServerSupabaseClient(url: string, anonKey: string): Tr
  * functions) -- for a Route Handler that needs to call an RPC as the caller
  * rather than as service-role.
  */
-export function createUserScopedServerSupabaseClient(url: string, anonKey: string, accessToken: string): TripmeSupabaseClient {
+export function createUserScopedServerSupabaseClient(url: string, anonKey: string, accessToken: string): SabiDriveSupabaseClient {
   return createClient<Database>(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -39,7 +39,7 @@ export function createUserScopedServerSupabaseClient(url: string, anonKey: strin
 
 /** Resolves the caller behind a bearer token, or null if it's invalid/expired. */
 export async function getUserFromAccessToken(
-  anonClient: TripmeSupabaseClient,
+  anonClient: SabiDriveSupabaseClient,
   accessToken: string
 ): Promise<{ id: string } | null> {
   const { data, error } = await anonClient.auth.getUser(accessToken);

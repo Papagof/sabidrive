@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
-import { adminQueries, useSupabaseClient } from "@tripme/supabase";
+import { Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { InviteUserForm } from "@/components/InviteUserForm";
 
 interface StaffRow {

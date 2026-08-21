@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Banner, Button, Card, StatusPill } from "@tripme/ui";
-import { useSupabaseClient, userQueries } from "@tripme/supabase";
+import { Banner, Button, Card, StatusPill } from "@sabidrive/ui";
+import { useSupabaseClient, userQueries } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 type Step = "idle" | "entering_phone" | "code_sent";

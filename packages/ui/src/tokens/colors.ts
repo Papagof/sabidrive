@@ -1,5 +1,5 @@
 /**
- * Tripme calm-palette source of truth.
+ * SabiDrive calm-palette source of truth.
  * `critical` is reserved for true SOS / emergency alerts only — never use it
  * for ordinary warnings, delays, or destructive-but-routine UI (use `caution`).
  */

@@ -3,8 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Banner, Button, Card } from "@tripme/ui";
-import { schoolQueries, useSupabaseClient } from "@tripme/supabase";
+import { Banner, Button, Card } from "@sabidrive/ui";
+import { schoolQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { getCurrentPosition, GeoError, type GeoPosition } from "@/lib/geolocation";
 
 type LocationStatus = "idle" | "requesting" | "granted" | "denied";
@@ -82,7 +82,7 @@ export default function SignupPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 py-10">
       <h1 className="mb-1 text-2xl font-semibold text-brand-800">Create your school</h1>
-      <p className="mb-6 text-neutral-600">Set up Tripme for your school — you&apos;ll be the first admin.</p>
+      <p className="mb-6 text-neutral-600">Set up SabiDrive for your school — you&apos;ll be the first admin.</p>
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1">

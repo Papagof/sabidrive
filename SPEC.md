@@ -1,16 +1,16 @@
-# Tripme — School Bus Tracking App: Product/Design Prompt
+# SabiDrive — School Bus Tracking App: Product/Design Prompt
 
 Here's a comprehensive prompt you can use to brief a designer, developer, or AI tool to build the app:
 
 ---
 
-**App Name:** Tripme
+**App Name:** SabiDrive
 **Type:** Mobile app (iOS & Android) for real-time school bus tracking and child safety
 **Audience:** Primary and secondary school students, their parents/guardians, school administrators, bus drivers, and transport coordinators
 
 ## Overview
 
-Design and build "Tripme," a school transportation safety app that lets parents and school authorities track school buses in real time, monitor which children are on board, and receive alerts throughout the pickup/drop-off journey. The app should reduce parental anxiety, improve school accountability, and add multiple layers of child safety verification.
+Design and build "SabiDrive," a school transportation safety app that lets parents and school authorities track school buses in real time, monitor which children are on board, and receive alerts throughout the pickup/drop-off journey. The app should reduce parental anxiety, improve school accountability, and add multiple layers of child safety verification.
 
 ## User Roles
 

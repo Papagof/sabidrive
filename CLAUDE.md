@@ -1,4 +1,4 @@
-# Tripme
+# SabiDrive
 
 School bus tracking + child safety app. Full product spec: [SPEC.md](SPEC.md). Build plan and Phase 1/2 scope cut line: see the plan this repo was built from (ask the user if it's not in your context — it lays out what's deliberately deferred).
 
@@ -14,7 +14,7 @@ Two separate Next.js 14 (App Router, TypeScript) web apps sharing one Supabase b
 - **`supabase/migrations`** — schema, RLS policies, and RPCs, applied in numeric order.
 - **`scripts/seed.ts`** — creates one demo school, a route+stops, a bus, students, guardian links, and one auth account per role.
 
-Workspace-internal packages (`@tripme/ui`, `@tripme/supabase`, `@tripme/config`) are consumed as TypeScript source directly (no build step) — both apps list them in `next.config.mjs`'s `transpilePackages`.
+Workspace-internal packages (`@sabidrive/ui`, `@sabidrive/supabase`, `@sabidrive/config`) are consumed as TypeScript source directly (no build step) — both apps list them in `next.config.mjs`'s `transpilePackages`.
 
 ## Commands
 
@@ -72,7 +72,7 @@ Capacitor shell around the **family app only** (parent/driver — the admin dash
 - **Android**: fully buildable and verified on this machine (Java 21 + Android SDK already installed). `cd apps/family-native/android && ./gradlew.bat assembleDebug` → `app/build/outputs/apk/debug/app-debug.apk`. Confirmed end-to-end: installed on an emulator (`adb install`), launched, and it correctly rendered the live login screen.
 - **iOS**: scaffolded and configured (`ios/App`, Xcode project + Info.plist) but **not buildable in this environment** — no Mac available, and `xcodebuild`/CocoaPods need one. Building/signing/submitting needs either a real Mac or a cloud CI Mac runner (e.g. GitHub Actions' macOS runners, or a service like Codemagic) — not set up yet.
 - **Known gap**: the existing Web Push implementation (`apps/family/public/push-worker.js`) is unreliable inside a native WebView, especially on iOS (WKWebView doesn't support the web Push API the way an installed-PWA Safari tab does). In-app Supabase Realtime notifications work regardless. Real native push would mean adding `@capacitor/push-notifications` (FCM/APNs) — not done.
-- `appId` is `com.tripme.family` — a placeholder reverse-domain identifier, fine for development, but each store just needs it to be globally unique at actual submission time (doesn't require owning `tripme.com`).
+- `appId` is `com.sabidrive.family` — a placeholder reverse-domain identifier, fine for development, but each store just needs it to be globally unique at actual submission time (doesn't require owning `sabidrive.com`).
 - Not done: release signing (keystore generation), Play Console / App Store Connect submission, native push.
 
 ## Data model & RLS mental model
@@ -131,7 +131,7 @@ The push pipeline (`notifications` insert → `dispatch_push_notification` trigg
 
 - `VAPID_PUBLIC_KEY` = `BKRyj0_Lo1kgE5Lt0geo4_X3rl3ldVqk6zixrxLa-F3jkZhjxqJVFW22U0eyz6CQTksSpsU3mw4q8zfZYL-NReA` (also in `apps/family/.env.local` as `NEXT_PUBLIC_VAPID_PUBLIC_KEY` — must match)
 - `VAPID_PRIVATE_KEY` = `HxLmgZZX9MOtkrOvsYi6JCPoZ0EkEZ7ViH0RNiBijp4`
-- `VAPID_SUBJECT` = `mailto:admin@tripme.dev` (or any contact URI)
+- `VAPID_SUBJECT` = `mailto:admin@sabidrive.dev` (or any contact URI)
 - `PUSH_DISPATCH_SECRET` = `f0b475bff10d901a6a4de081c4a16ca2df77e8cd11a4d0e997c34b1e66054e3b` (must match the Vault secret named `push_dispatch_secret` set in `0016_push_dispatch_trigger.sql` — if you ever rotate it, update both sides via `select vault.update_secret(...)`)
 
 Once set, subscribe from the family app (Parent or Driver home → "Enable notifications" — note `next-pwa`'s own service worker is dev-disabled, but `public/push-worker.js` is a separate, always-active registration) and trigger any notification (e.g. an admin announcement) to see a real push.

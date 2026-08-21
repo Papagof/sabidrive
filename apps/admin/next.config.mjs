@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@tripme/ui", "@tripme/supabase"]
+  transpilePackages: ["@sabidrive/ui", "@sabidrive/supabase"]
 };
 
 export default nextConfig;

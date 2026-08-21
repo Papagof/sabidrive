@@ -1,4 +1,4 @@
-import type { TripmeSupabaseClient } from "../client";
+import type { SabiDriveSupabaseClient } from "../client";
 
 export interface InviteUserInput {
   email: string;
@@ -12,7 +12,7 @@ export interface InviteUserInput {
  * that's allowed to touch the Supabase service-role key) to invite a new
  * driver, parent, or co-admin by email.
  */
-export async function inviteUser(supabase: TripmeSupabaseClient, input: InviteUserInput): Promise<{ userId: string }> {
+export async function inviteUser(supabase: SabiDriveSupabaseClient, input: InviteUserInput): Promise<{ userId: string }> {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) throw new Error("Not signed in");
@@ -30,7 +30,7 @@ export async function inviteUser(supabase: TripmeSupabaseClient, input: InviteUs
   return body as { userId: string };
 }
 
-async function authedFetch(supabase: TripmeSupabaseClient, path: string, payload: unknown) {
+async function authedFetch(supabase: SabiDriveSupabaseClient, path: string, payload: unknown) {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) throw new Error("Not signed in");
@@ -48,12 +48,12 @@ async function authedFetch(supabase: TripmeSupabaseClient, path: string, payload
 }
 
 /** Sends a real SMS one-time code to verify a phone number (calls the family app's /api/phone/send-otp). */
-export async function sendPhoneOtp(supabase: TripmeSupabaseClient, phone: string): Promise<void> {
+export async function sendPhoneOtp(supabase: SabiDriveSupabaseClient, phone: string): Promise<void> {
   await authedFetch(supabase, "/api/phone/send-otp", { phone });
 }
 
 /** Confirms the SMS code sent by sendPhoneOtp (calls /api/phone/verify-otp). */
-export async function verifyPhoneOtp(supabase: TripmeSupabaseClient, code: string): Promise<void> {
+export async function verifyPhoneOtp(supabase: SabiDriveSupabaseClient, code: string): Promise<void> {
   await authedFetch(supabase, "/api/phone/verify-otp", { code });
 }
 
@@ -64,7 +64,7 @@ export async function verifyPhoneOtp(supabase: TripmeSupabaseClient, code: strin
  * the Scan screen instead of scanning the student's QR at that stop.
  */
 export async function requestPickupCode(
-  supabase: TripmeSupabaseClient,
+  supabase: SabiDriveSupabaseClient,
   studentId: string,
   eventType: "board" | "alight"
 ): Promise<void> {
@@ -82,7 +82,7 @@ export interface VerifyPickupCodeResult {
  * trip's roster and performs the board/alight check-in server-side.
  */
 export async function verifyPickupCode(
-  supabase: TripmeSupabaseClient,
+  supabase: SabiDriveSupabaseClient,
   tripId: string,
   eventType: "board" | "alight",
   code: string
@@ -103,7 +103,7 @@ export interface GuardianLookupResult {
  * than trying to invite a duplicate account for an email that already
  * exists.
  */
-export async function findGuardianByEmail(supabase: TripmeSupabaseClient, email: string): Promise<GuardianLookupResult> {
+export async function findGuardianByEmail(supabase: SabiDriveSupabaseClient, email: string): Promise<GuardianLookupResult> {
   return (await authedFetch(supabase, "/api/find-guardian-by-email", { email })) as GuardianLookupResult;
 }
 

@@ -5,7 +5,7 @@
  * push events and show notifications — no fetch/caching logic here.
  */
 self.addEventListener("push", (event) => {
-  let payload = { title: "Tripme", body: "You have a new notification." };
+  let payload = { title: "SabiDrive", body: "You have a new notification." };
   try {
     if (event.data) payload = { ...payload, ...event.data.json() };
   } catch {

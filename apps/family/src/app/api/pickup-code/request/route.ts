@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAnonServerSupabaseClient, createServiceRoleSupabaseClient, getUserFromAccessToken } from "@tripme/supabase/server";
+import { createAnonServerSupabaseClient, createServiceRoleSupabaseClient, getUserFromAccessToken } from "@sabidrive/supabase/server";
 
 export const runtime = "nodejs";
 

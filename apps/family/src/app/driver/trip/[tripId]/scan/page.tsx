@@ -3,8 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
-import { Button, Banner, Card } from "@tripme/ui";
-import { studentQueries, tripQueries, userQueries, useSupabaseClient } from "@tripme/supabase";
+import { Button, Banner, Card } from "@sabidrive/ui";
+import { studentQueries, tripQueries, userQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
 
 export default function ScanPage() {

@@ -17,7 +17,7 @@ const toneClasses: Record<StatusTone, string> = {
   critical: "bg-critical-50 text-critical-700"
 };
 
-/** Maps common Tripme domain statuses to a StatusTone. */
+/** Maps common SabiDrive domain statuses to a StatusTone. */
 export const statusToneMap: Record<string, StatusTone> = {
   scheduled: "neutral",
   in_progress: "info",

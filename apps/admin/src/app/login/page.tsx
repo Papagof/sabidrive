@@ -3,8 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button, Card } from "@tripme/ui";
-import { useSession, useSupabaseClient } from "@tripme/supabase";
+import { Button, Card } from "@sabidrive/ui";
+import { useSession, useSupabaseClient } from "@sabidrive/supabase";
 
 export default function LoginPage() {
   const supabase = useSupabaseClient();

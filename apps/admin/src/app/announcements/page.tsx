@@ -3,8 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Button, Card } from "@tripme/ui";
-import { adminQueries, useSupabaseClient } from "@tripme/supabase";
+import { Button, Card } from "@sabidrive/ui";
+import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
 
 interface AnnouncementRow {
   id: string;

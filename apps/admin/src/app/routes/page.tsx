@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Button, Card, StatusPill } from "@tripme/ui";
-import { adminQueries, useSupabaseClient } from "@tripme/supabase";
+import { Button, Card, StatusPill } from "@sabidrive/ui";
+import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
 
 interface RouteRow {
   id: string;

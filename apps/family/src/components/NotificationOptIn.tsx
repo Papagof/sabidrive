@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@tripme/ui";
-import { useSupabaseClient } from "@tripme/supabase";
+import { Button } from "@sabidrive/ui";
+import { useSupabaseClient } from "@sabidrive/supabase";
 import { subscribeToPush } from "@/lib/push";
 
 export function NotificationOptIn({ userId }: { userId: string }) {

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Logo } from "@tripme/ui";
+import { Logo } from "@sabidrive/ui";
 import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Tripme",
+  title: "SabiDrive",
   description: "Track your child's school bus, live.",
   manifest: "/manifest.webmanifest"
 };

@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Card, StatusPill, statusToneMap } from "@tripme/ui";
-import { tripQueries, useSupabaseClient } from "@tripme/supabase";
+import { Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { tripQueries, useSupabaseClient } from "@sabidrive/supabase";
 
 interface AttendanceRow {
   id: string;

@@ -7,8 +7,8 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * app-store resubmission needed.
  */
 const config: CapacitorConfig = {
-  appId: "com.tripme.family",
-  appName: "Tripme",
+  appId: "com.sabidrive.family",
+  appName: "SabiDrive",
   webDir: "www",
   server: {
     url: "https://family-six-theta.vercel.app",

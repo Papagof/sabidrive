@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createBrowserSupabaseClient, type TripmeSupabaseClient } from "./client";
+import { createBrowserSupabaseClient, type SabiDriveSupabaseClient } from "./client";
 
-const SupabaseContext = createContext<TripmeSupabaseClient | null>(null);
+const SupabaseContext = createContext<SabiDriveSupabaseClient | null>(null);
 
 export interface SupabaseProviderProps {
   url: string;
@@ -23,7 +23,7 @@ export function SupabaseProvider({ url, anonKey, children }: SupabaseProviderPro
   );
 }
 
-export function useSupabaseClient(): TripmeSupabaseClient {
+export function useSupabaseClient(): SabiDriveSupabaseClient {
   const client = useContext(SupabaseContext);
   if (!client) {
     throw new Error("useSupabaseClient must be used within a SupabaseProvider");

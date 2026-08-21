@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServiceRoleSupabaseClient } from "@tripme/supabase/server";
+import { createServiceRoleSupabaseClient } from "@sabidrive/supabase/server";
 
 // Node runtime (not edge) — needs the service-role key and the Admin API.
 export const runtime = "nodejs";

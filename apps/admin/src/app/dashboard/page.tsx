@@ -5,11 +5,11 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Card, StatusPill } from "@tripme/ui";
-import type { FleetBusMarker, MapPoint } from "@tripme/ui";
-import { adminQueries, useFleetTrips, useSupabaseClient } from "@tripme/supabase";
+import { Card, StatusPill } from "@sabidrive/ui";
+import type { FleetBusMarker, MapPoint } from "@sabidrive/ui";
+import { adminQueries, useFleetTrips, useSupabaseClient } from "@sabidrive/supabase";
 
-const FleetMap = dynamic(() => import("@tripme/ui").then((m) => m.FleetMap), { ssr: false });
+const FleetMap = dynamic(() => import("@sabidrive/ui").then((m) => m.FleetMap), { ssr: false });
 
 export default function DashboardPage() {
   const { profile, isLoading } = useRequireAdmin();

@@ -4,7 +4,7 @@ import {
   createServiceRoleSupabaseClient,
   createUserScopedServerSupabaseClient,
   getUserFromAccessToken
-} from "@tripme/supabase/server";
+} from "@sabidrive/supabase/server";
 
 export const runtime = "nodejs";
 

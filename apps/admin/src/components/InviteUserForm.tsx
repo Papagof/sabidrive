@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Banner, Button } from "@tripme/ui";
-import { userQueries, useSupabaseClient } from "@tripme/supabase";
+import { Banner, Button } from "@sabidrive/ui";
+import { userQueries, useSupabaseClient } from "@sabidrive/supabase";
 
 export interface InvitedUser {
   userId: string;

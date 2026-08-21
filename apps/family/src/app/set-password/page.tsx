@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card } from "@tripme/ui";
-import { useSession, useSupabaseClient } from "@tripme/supabase";
+import { Button, Card } from "@sabidrive/ui";
+import { useSession, useSupabaseClient } from "@sabidrive/supabase";
 
 const SESSION_TIMEOUT_MS = 6000;
 

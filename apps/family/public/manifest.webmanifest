@@ -1,6 +1,6 @@
 {
-  "name": "Tripme",
-  "short_name": "Tripme",
+  "name": "SabiDrive",
+  "short_name": "SabiDrive",
   "description": "Track your child's school bus, live.",
   "start_url": "/",
   "display": "standalone",

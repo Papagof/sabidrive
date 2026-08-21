@@ -1,4 +1,4 @@
-import type { TripmeSupabaseClient } from "../client";
+import type { SabiDriveSupabaseClient } from "../client";
 
 export interface PushSubscriptionInput {
   user_id: string;
@@ -7,7 +7,7 @@ export interface PushSubscriptionInput {
   auth_key: string;
 }
 
-export async function upsertPushSubscription(supabase: TripmeSupabaseClient, input: PushSubscriptionInput) {
+export async function upsertPushSubscription(supabase: SabiDriveSupabaseClient, input: PushSubscriptionInput) {
   const { error } = await supabase.from("push_subscriptions").upsert(input, { onConflict: "endpoint" });
   if (error) throw error;
 }

@@ -18,7 +18,7 @@ config({ path: resolve(__dirname, "../.env.local") });
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const DEMO_PASSWORD = "TripmeDemo123!";
+const DEMO_PASSWORD = "SabiDriveDemo123!";
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error("Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY in .env.local at repo root.");
@@ -59,7 +59,7 @@ async function createUser(email: string, fullName: string, role: string, schoolI
 }
 
 async function main() {
-  console.log("Seeding Tripme demo data...");
+  console.log("Seeding SabiDrive demo data...");
 
   const { data: school, error: schoolError } = await supabase
     .from("schools")
@@ -75,10 +75,10 @@ async function main() {
   if (schoolError || !school) throw new Error(`school insert failed: ${schoolError?.message}`);
   console.log(`  school: ${school.id}`);
 
-  const adminId = await createUser("admin@tripme.dev", "Ada Admin", "admin", school.id);
-  const driverId = await createUser("driver@tripme.dev", "Dana Driver", "driver", school.id);
-  const parent1Id = await createUser("parent1@tripme.dev", "Priya Parent", "parent", school.id);
-  const parent2Id = await createUser("parent2@tripme.dev", "Pablo Parent", "parent", school.id);
+  const adminId = await createUser("admin@sabidrive.dev", "Ada Admin", "admin", school.id);
+  const driverId = await createUser("driver@sabidrive.dev", "Dana Driver", "driver", school.id);
+  const parent1Id = await createUser("parent1@sabidrive.dev", "Priya Parent", "parent", school.id);
+  const parent2Id = await createUser("parent2@sabidrive.dev", "Pablo Parent", "parent", school.id);
   console.log(`  admin: ${adminId}, driver: ${driverId}, parent1: ${parent1Id}, parent2: ${parent2Id}`);
 
   const { data: route, error: routeError } = await supabase
@@ -148,10 +148,10 @@ async function main() {
   }
 
   console.log("\nSeed complete. Demo logins (password for all: %s):", DEMO_PASSWORD);
-  console.log("  admin@tripme.dev   (School Admin dashboard)");
-  console.log("  driver@tripme.dev  (Driver flow, assigned to Bus 12)");
-  console.log("  parent1@tripme.dev (guardian of Ivy + Owen Nguyen)");
-  console.log("  parent2@tripme.dev (guardian of Maya Torres)");
+  console.log("  admin@sabidrive.dev   (School Admin dashboard)");
+  console.log("  driver@sabidrive.dev  (Driver flow, assigned to Bus 12)");
+  console.log("  parent1@sabidrive.dev (guardian of Ivy + Owen Nguyen)");
+  console.log("  parent2@sabidrive.dev (guardian of Maya Torres)");
 }
 
 main().catch((err) => {

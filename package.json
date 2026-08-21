@@ -1,5 +1,5 @@
 {
-  "name": "tripme",
+  "name": "sabidrive",
   "private": true,
   "version": "0.1.0",
   "engines": {
@@ -11,7 +11,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "sim:dev": "pnpm --filter @tripme/gps-sim run sim:dev",
+    "sim:dev": "pnpm --filter @sabidrive/gps-sim run sim:dev",
     "db:seed": "tsx scripts/seed.ts"
   },
   "devDependencies": {

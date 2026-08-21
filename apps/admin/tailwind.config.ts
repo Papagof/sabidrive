@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import sharedPreset from "@tripme/ui/src/tailwind-preset";
+import sharedPreset from "@sabidrive/ui/src/tailwind-preset";
 
 const config: Config = {
   presets: [sharedPreset as Config],

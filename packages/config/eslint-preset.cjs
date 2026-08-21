@@ -1,4 +1,4 @@
-/** Shared ESLint preset for Tripme apps/packages. */
+/** Shared ESLint preset for SabiDrive apps/packages. */
 module.exports = {
   root: false,
   extends: ["next/core-web-vitals", "eslint:recommended"],

@@ -3,7 +3,7 @@ import {
   createAnonServerSupabaseClient,
   createServiceRoleSupabaseClient,
   getUserFromAccessToken
-} from "@tripme/supabase/server";
+} from "@sabidrive/supabase/server";
 
 // Node runtime (not edge) — needs the service-role key and the full
 // supabase-js Admin API surface.

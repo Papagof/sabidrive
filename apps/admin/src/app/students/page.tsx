@@ -4,8 +4,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Banner, Button, Card } from "@tripme/ui";
-import { adminQueries, userQueries, useSupabaseClient } from "@tripme/supabase";
+import { Banner, Button, Card } from "@sabidrive/ui";
+import { adminQueries, userQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { InviteUserForm } from "@/components/InviteUserForm";
 
 const INVITE_NEW_GUARDIAN = "__invite_new_guardian__";

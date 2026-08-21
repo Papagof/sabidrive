@@ -1,4 +1,4 @@
-import type { TripmeSupabaseClient } from "../client";
+import type { SabiDriveSupabaseClient } from "../client";
 
 interface GuardianStudentRow {
   students: {
@@ -15,7 +15,7 @@ interface GuardianStudentRow {
 }
 
 /** A guardian's children, with each child's school name -- lets a parent with kids at different schools tell them apart. */
-export async function getGuardianStudents(supabase: TripmeSupabaseClient, guardianId: string) {
+export async function getGuardianStudents(supabase: SabiDriveSupabaseClient, guardianId: string) {
   const { data, error } = await supabase
     .from("guardian_student_links")
     .select(
@@ -37,7 +37,7 @@ export interface PickupInfo {
  * drop-off — used by the driver's Scan screen to confirm identity before an
  * `alight` check-in (two-factor pickup authorization).
  */
-export async function getPickupInfo(supabase: TripmeSupabaseClient, qrToken: string): Promise<PickupInfo> {
+export async function getPickupInfo(supabase: SabiDriveSupabaseClient, qrToken: string): Promise<PickupInfo> {
   const { data: student, error: studentError } = await supabase
     .from("students")
     .select("id, first_name, last_name, qr_token")
@@ -71,7 +71,7 @@ export async function getPickupInfo(supabase: TripmeSupabaseClient, qrToken: str
 }
 
 /** Active (in_progress) trip, if any, for a student's default route. */
-export async function getActiveTripForRoute(supabase: TripmeSupabaseClient, routeId: string) {
+export async function getActiveTripForRoute(supabase: SabiDriveSupabaseClient, routeId: string) {
   const { data, error } = await supabase
     .from("trips")
     .select("*")

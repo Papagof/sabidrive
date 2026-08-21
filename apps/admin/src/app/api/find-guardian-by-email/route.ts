@@ -3,7 +3,7 @@ import {
   createAnonServerSupabaseClient,
   createServiceRoleSupabaseClient,
   getUserFromAccessToken
-} from "@tripme/supabase/server";
+} from "@sabidrive/supabase/server";
 
 export const runtime = "nodejs";
 

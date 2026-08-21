@@ -1,18 +1,18 @@
-import type { TripmeSupabaseClient } from "../client";
+import type { SabiDriveSupabaseClient } from "../client";
 
-export async function startTrip(supabase: TripmeSupabaseClient, busId: string, direction: "pickup" | "dropoff" = "pickup") {
+export async function startTrip(supabase: SabiDriveSupabaseClient, busId: string, direction: "pickup" | "dropoff" = "pickup") {
   const { data, error } = await supabase.rpc("start_trip", { p_bus_id: busId, p_direction: direction });
   if (error) throw error;
   return data as string;
 }
 
-export async function endTrip(supabase: TripmeSupabaseClient, tripId: string) {
+export async function endTrip(supabase: SabiDriveSupabaseClient, tripId: string) {
   const { error } = await supabase.rpc("end_trip", { p_trip_id: tripId });
   if (error) throw error;
 }
 
 export async function checkIn(
-  supabase: TripmeSupabaseClient,
+  supabase: SabiDriveSupabaseClient,
   tripId: string,
   qrToken: string,
   eventType: "board" | "alight" = "board"
@@ -21,7 +21,7 @@ export async function checkIn(
   if (error) throw error;
 }
 
-export async function getDriverBus(supabase: TripmeSupabaseClient, driverId: string) {
+export async function getDriverBus(supabase: SabiDriveSupabaseClient, driverId: string) {
   const { data, error } = await supabase
     .from("buses")
     .select("*, routes:default_route_id(id, name, polyline)")
@@ -31,7 +31,7 @@ export async function getDriverBus(supabase: TripmeSupabaseClient, driverId: str
   return data;
 }
 
-export async function getTripWithDriverContact(supabase: TripmeSupabaseClient, tripId: string) {
+export async function getTripWithDriverContact(supabase: SabiDriveSupabaseClient, tripId: string) {
   const { data, error } = await supabase
     .from("trips")
     .select("id, bus_id, buses!trips_bus_id_fkey(label, driver:driver_id(full_name, phone, verification_status))")
@@ -41,7 +41,7 @@ export async function getTripWithDriverContact(supabase: TripmeSupabaseClient, t
   return data;
 }
 
-export async function getAttendanceForTrip(supabase: TripmeSupabaseClient, tripId: string) {
+export async function getAttendanceForTrip(supabase: SabiDriveSupabaseClient, tripId: string) {
   const { data, error } = await supabase
     .from("attendance_expectations")
     .select("*, students(first_name, last_name)")

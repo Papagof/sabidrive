@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Card, StatusPill, statusToneMap } from "@tripme/ui";
-import { tripQueries, useSupabaseClient } from "@tripme/supabase";
+import { Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { tripQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
 
 interface AttendanceRow {

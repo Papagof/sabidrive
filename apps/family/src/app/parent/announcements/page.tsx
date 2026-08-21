@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Card } from "@tripme/ui";
-import { useNotifications } from "@tripme/supabase";
+import { Card } from "@sabidrive/ui";
+import { useNotifications } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 export default function AnnouncementsPage() {

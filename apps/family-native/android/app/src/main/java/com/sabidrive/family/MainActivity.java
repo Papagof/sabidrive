@@ -1,4 +1,4 @@
-package com.tripme.family;
+package com.sabidrive.family;
 
 import com.getcapacitor.BridgeActivity;
 
