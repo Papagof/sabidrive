@@ -136,7 +136,7 @@ The push pipeline (`notifications` insert → `dispatch_push_notification` trigg
 
 Once set, subscribe from the family app (Parent or Driver home → "Enable notifications" — note `next-pwa`'s own service worker is dev-disabled, but `public/push-worker.js` is a separate, always-active registration) and trigger any notification (e.g. an admin announcement) to see a real push.
 
-(Status: the user has added these Edge Function secrets — not yet re-verified end-to-end in this session.)
+(Status: secrets confirmed working — a disposable-school test inserted a real notification for a fake-but-valid push subscription and confirmed the `pg_net` trigger's call to `push-dispatch` now returns `200 "ok"` instead of 500. That verifies the Vault secret matches `PUSH_DISPATCH_SECRET` and the VAPID keys are valid. Not yet confirmed: an actual push landing on a real subscribed browser, which needs a human clicking "Enable notifications" and receiving it — the one leg no automated test can cover.)
 
 ## Phone verification & phone login (real SMS, manual step required)
 
