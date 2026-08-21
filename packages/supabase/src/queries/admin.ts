@@ -146,6 +146,18 @@ export async function createBus(supabase: SabiDriveSupabaseClient, input: Create
   return data;
 }
 
+export interface UpdateBusInput {
+  label?: string;
+  driver_id?: string | null;
+  default_route_id?: string | null;
+}
+
+/** Lets an admin reassign a bus's driver and/or route after creation -- e.g. a bus created before its route existed. */
+export async function updateBus(supabase: SabiDriveSupabaseClient, busId: string, input: UpdateBusInput) {
+  const { error } = await supabase.from("buses").update(input).eq("id", busId);
+  if (error) throw error;
+}
+
 export interface CreateStudentInput {
   school_id: string;
   first_name: string;

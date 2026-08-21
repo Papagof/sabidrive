@@ -19,6 +19,8 @@ interface BusRow {
   routes: { id: string; name: string } | null;
 }
 
+const UNASSIGNED = "__unassigned__";
+
 const nextVerificationStatus: Record<VerificationStatus, VerificationStatus> = {
   pending: "verified",
   verified: "rejected",
@@ -44,6 +46,12 @@ export default function BusesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isInvitingDriver, setIsInvitingDriver] = useState(false);
 
+  const [editingBusId, setEditingBusId] = useState<string | null>(null);
+  const [editDriverId, setEditDriverId] = useState("");
+  const [editRouteId, setEditRouteId] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
   async function refetch() {
     if (!profile?.school_id) return;
     const busData = await adminQueries.getSchoolBuses(supabase, profile.school_id);
@@ -64,6 +72,35 @@ export default function BusesPage() {
   async function handleCycleVerification(driverId: string, current: VerificationStatus | null) {
     await adminQueries.setDriverVerification(supabase, driverId, nextVerificationStatus[current ?? "pending"]);
     await refetch();
+  }
+
+  function startEdit(bus: BusRow) {
+    setEditingBusId(bus.id);
+    setEditDriverId(bus.driver?.id ?? UNASSIGNED);
+    setEditRouteId(bus.routes?.id ?? UNASSIGNED);
+    setEditError(null);
+  }
+
+  function cancelEdit() {
+    setEditingBusId(null);
+    setEditError(null);
+  }
+
+  async function handleSaveEdit(busId: string) {
+    setIsSavingEdit(true);
+    setEditError(null);
+    try {
+      await adminQueries.updateBus(supabase, busId, {
+        driver_id: editDriverId === UNASSIGNED ? null : editDriverId,
+        default_route_id: editRouteId === UNASSIGNED ? null : editRouteId
+      });
+      setEditingBusId(null);
+      await refetch();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Failed to update bus");
+    } finally {
+      setIsSavingEdit(false);
+    }
   }
 
   async function handleCreate(e: FormEvent) {
@@ -154,27 +191,69 @@ export default function BusesPage() {
         </Card>
 
         <div className="flex flex-col gap-2">
-          {buses.map((bus) => (
-            <Card key={bus.id} className="flex items-center justify-between">
-              <div>
+          {buses.map((bus) =>
+            editingBusId === bus.id ? (
+              <Card key={bus.id} className="flex flex-col gap-2">
                 <p className="font-medium">{bus.label}</p>
-                <p className="text-sm text-neutral-500">
-                  {bus.driver?.full_name ?? "No driver"} · {bus.routes?.name ?? "No route"}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {bus.driver ? (
-                  <button onClick={() => handleCycleVerification(bus.driver!.id, bus.driver!.verification_status)}>
-                    <StatusPill
-                      label={`driver: ${bus.driver.verification_status ?? "pending"}`}
-                      tone={statusToneMap[bus.driver.verification_status ?? "pending"] ?? "neutral"}
-                    />
-                  </button>
-                ) : null}
-                <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
-              </div>
-            </Card>
-          ))}
+                <select
+                  value={editDriverId}
+                  onChange={(e) => setEditDriverId(e.target.value)}
+                  className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+                >
+                  <option value={UNASSIGNED}>No driver</option>
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.full_name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={editRouteId}
+                  onChange={(e) => setEditRouteId(e.target.value)}
+                  className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+                >
+                  <option value={UNASSIGNED}>No route</option>
+                  {routes.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+                {editError ? <p className="text-sm text-critical-600">{editError}</p> : null}
+                <div className="flex gap-2">
+                  <Button onClick={() => handleSaveEdit(bus.id)} disabled={isSavingEdit} className="flex-1">
+                    {isSavingEdit ? "Saving..." : "Save"}
+                  </Button>
+                  <Button variant="ghost" onClick={cancelEdit}>
+                    Cancel
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <Card key={bus.id} className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{bus.label}</p>
+                  <p className="text-sm text-neutral-500">
+                    {bus.driver?.full_name ?? "No driver"} · {bus.routes?.name ?? "No route"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {bus.driver ? (
+                    <button onClick={() => handleCycleVerification(bus.driver!.id, bus.driver!.verification_status)}>
+                      <StatusPill
+                        label={`driver: ${bus.driver.verification_status ?? "pending"}`}
+                        tone={statusToneMap[bus.driver.verification_status ?? "pending"] ?? "neutral"}
+                      />
+                    </button>
+                  ) : null}
+                  <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
+                  <Button variant="secondary" onClick={() => startEdit(bus)}>
+                    Edit
+                  </Button>
+                </div>
+              </Card>
+            )
+          )}
           {buses.length === 0 ? <p className="text-neutral-500">No buses yet.</p> : null}
         </div>
       </div>
