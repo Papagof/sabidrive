@@ -33,6 +33,7 @@ interface StaffRow {
   email: string | null;
   role: string;
   verification_status: string | null;
+  deactivated_at: string | null;
 }
 
 /**
@@ -47,9 +48,12 @@ interface StaffRow {
  */
 export async function getSchoolStaffAndGuardians(supabase: SabiDriveSupabaseClient, schoolId: string) {
   const [staffResult, sameSchoolGuardiansResult, linkedGuardiansResult] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, email, role, verification_status").eq("school_id", schoolId).in("role", ["admin", "driver"]),
-    supabase.from("profiles").select("id, full_name, email, role, verification_status").eq("school_id", schoolId).eq("role", "parent"),
-    supabase.from("students").select("guardian_student_links(profiles:guardian_id(id, full_name, email, role, verification_status))").eq("school_id", schoolId)
+    supabase.from("profiles").select("id, full_name, email, role, verification_status, deactivated_at").eq("school_id", schoolId).in("role", ["admin", "driver"]),
+    supabase.from("profiles").select("id, full_name, email, role, verification_status, deactivated_at").eq("school_id", schoolId).eq("role", "parent"),
+    supabase
+      .from("students")
+      .select("guardian_student_links(profiles:guardian_id(id, full_name, email, role, verification_status, deactivated_at))")
+      .eq("school_id", schoolId)
   ]);
   if (staffResult.error) throw staffResult.error;
   if (sameSchoolGuardiansResult.error) throw sameSchoolGuardiansResult.error;
@@ -250,5 +254,20 @@ export async function linkGuardianToStudent(
   const { error } = await supabase
     .from("guardian_student_links")
     .insert({ guardian_id: guardianId, student_id: studentId, relationship, is_primary: true, is_authorized_pickup: true });
+  if (error) throw error;
+}
+
+/**
+ * Removes a guardian from every one of this school's students, without
+ * touching their account or any guardian link they have at another school
+ * -- "delete this parent" scoped to "my school", not their whole account.
+ * `gsl_admin_crud` (0003_rls_policies.sql) already only lets an admin
+ * delete guardian_student_links rows whose *student* is in their own
+ * school, so a plain guardian_id-only delete is safe as-is: any links to
+ * students at other schools simply don't match the policy and are left
+ * untouched, not errored on.
+ */
+export async function removeGuardianFromSchool(supabase: SabiDriveSupabaseClient, guardianId: string) {
+  const { error } = await supabase.from("guardian_student_links").delete().eq("guardian_id", guardianId);
   if (error) throw error;
 }

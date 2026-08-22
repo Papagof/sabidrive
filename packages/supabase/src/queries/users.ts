@@ -90,6 +90,15 @@ export async function verifyPickupCode(
   return (await authedFetch(supabase, "/api/pickup-code/verify", { tripId, eventType, code })) as VerifyPickupCodeResult;
 }
 
+/**
+ * Revokes or restores a driver's ability to sign in (calls the admin app's
+ * /api/deactivate-driver) -- the reversible alternative to deleting their
+ * account, since trip history can't lose its driver_id.
+ */
+export async function setDriverActive(supabase: SabiDriveSupabaseClient, driverId: string, active: boolean): Promise<void> {
+  await authedFetch(supabase, "/api/deactivate-driver", { driverId, deactivate: !active });
+}
+
 export interface GuardianLookupResult {
   found: boolean;
   id?: string;

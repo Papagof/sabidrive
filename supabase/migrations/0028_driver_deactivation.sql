@@ -1,0 +1,12 @@
+-- Admin can revoke a driver's access without hard-deleting their account
+-- (trips.driver_id is a required, non-cascading FK -- a driver who has ever
+-- driven a trip can't be deleted outright without either failing on that
+-- FK or silently erasing the "who drove this" audit trail). Deactivation
+-- is the reversible alternative: it's just a marker column here, read by
+-- the admin UI -- the actual login block happens via Supabase Auth's own
+-- ban mechanism (auth.admin.updateUserById(..., { ban_duration })), set
+-- from apps/admin/src/app/api/deactivate-driver (service role only, so no
+-- RLS/grant change needed here beyond the column itself -- the existing
+-- profiles_update_driver_admin policy from 0008 already covers it for any
+-- other admin-initiated column update on a driver's own-school profile).
+alter table public.profiles add column deactivated_at timestamptz;
