@@ -909,6 +909,39 @@ export type Database = {
           },
         ]
       }
+      trip_stop_approaches: {
+        Row: {
+          notified_at: string
+          stop_id: string
+          trip_id: string
+        }
+        Insert: {
+          notified_at?: string
+          stop_id: string
+          trip_id: string
+        }
+        Update: {
+          notified_at?: string
+          stop_id?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_stop_approaches_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stop_approaches_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           avg_speed_kmh: number
@@ -1002,6 +1035,18 @@ export type Database = {
       end_trip: { Args: { p_trip_id: string }; Returns: undefined }
       is_guardian_of: { Args: { target_student_id: string }; Returns: boolean }
       purge_old_data: { Args: never; Returns: undefined }
+      record_trip_location: {
+        Args: {
+          p_deviation_m?: number
+          p_heading_deg?: number
+          p_lat: number
+          p_lng: number
+          p_speed_kmh?: number
+          p_stop_etas?: Json
+          p_trip_id: string
+        }
+        Returns: undefined
+      }
       start_trip: {
         Args: { p_bus_id: string; p_direction?: string }
         Returns: string

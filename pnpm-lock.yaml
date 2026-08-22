@@ -87,6 +87,9 @@ importers:
 
   apps/family:
     dependencies:
+      '@sabidrive/gps-sim':
+        specifier: workspace:*
+        version: link:../../packages/gps-sim
       '@sabidrive/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase

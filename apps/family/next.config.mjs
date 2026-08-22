@@ -9,7 +9,7 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@sabidrive/ui", "@sabidrive/supabase"]
+  transpilePackages: ["@sabidrive/ui", "@sabidrive/supabase", "@sabidrive/gps-sim"]
 };
 
 export default withPWA(nextConfig);

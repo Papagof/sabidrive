@@ -2,9 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
 import { tripQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
+import { useLiveLocationSharing } from "@/lib/useLiveLocationSharing";
+
+const LOCATION_STATUS_LABEL: Record<string, string> = {
+  idle: "Starting location sharing…",
+  requesting: "Getting location permission…",
+  sharing: "Sharing live location",
+  unsupported: "Live location isn't supported on this device",
+  denied: "Location access denied",
+  error: "Couldn't share live location"
+};
 
 interface AttendanceRow {
   id: string;
@@ -21,6 +31,7 @@ export default function DriverTripPage() {
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [isEnding, setIsEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { status: locationStatus, errorMessage: locationError } = useLiveLocationSharing(tripId);
 
   async function refetch() {
     const data = await tripQueries.getAttendanceForTrip(supabase, tripId);
@@ -64,6 +75,21 @@ export default function DriverTripPage() {
       <p className="text-neutral-600">
         {boardedCount} of {attendance.length} students boarded
       </p>
+
+      <StatusPill
+        label={LOCATION_STATUS_LABEL[locationStatus] ?? locationStatus}
+        tone={locationStatus === "sharing" ? "positive" : locationStatus === "denied" || locationStatus === "error" ? "caution" : "neutral"}
+      />
+      {locationStatus === "denied" ? (
+        <Banner tone="caution" title="Turn on location access to share your live position">
+          Parents and the school can still see the trip and attendance without it &mdash; you can keep scanning students and end the trip normally.
+        </Banner>
+      ) : locationStatus === "error" && locationError ? (
+        <Banner tone="caution" title="Live location isn't sharing right now">
+          {locationError}
+        </Banner>
+      ) : null}
+
       <Button size="lg" onClick={() => router.push(`/driver/trip/${tripId}/scan`)}>
         Scan student
       </Button>
