@@ -2,10 +2,16 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card } from "@sabidrive/ui";
+import { Button, Card, PasswordInput } from "@sabidrive/ui";
 import { useSession, useSupabaseClient } from "@sabidrive/supabase";
 
 const SESSION_TIMEOUT_MS = 6000;
+
+// This page is the landing spot for two different email links -- an admin's
+// invite (apps/admin/src/app/api/invite-user) and a "forgot password" reset
+// (both apps' login pages) -- supabase-js's detectSessionInUrl handles both
+// the same way, so one page covers both rather than duplicating it.
+const ADMIN_APP_URL = "https://admin-nine-tau-50.vercel.app";
 
 export default function SetPasswordPage() {
   const supabase = useSupabaseClient();
@@ -17,9 +23,9 @@ export default function SetPasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
 
-  // supabase-js auto-detects the invite link's session from the URL on load
-  // (detectSessionInUrl, on by default) — if it never shows up, the link was
-  // invalid or already used.
+  // supabase-js auto-detects the invite/reset link's session from the URL on
+  // load (detectSessionInUrl, on by default) -- if it never shows up, the
+  // link was invalid, expired, or already used.
   useEffect(() => {
     if (session) return;
     const timer = setTimeout(() => setTimedOut(true), SESSION_TIMEOUT_MS);
@@ -44,14 +50,22 @@ export default function SetPasswordPage() {
       setError(updateError.message);
       return;
     }
+    if (profile?.role === "admin") {
+      window.location.href = `${ADMIN_APP_URL}/dashboard`;
+      return;
+    }
     router.replace(profile?.role === "driver" ? "/driver" : "/parent");
   }
 
   if (!isLoading && !session && timedOut) {
     return (
       <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 text-center">
-        <h1 className="mb-2 text-2xl font-semibold text-brand-800">Invite link invalid</h1>
-        <p className="text-neutral-600">This invite link is invalid or has already been used. Ask your school admin to send a new one.</p>
+        <h1 className="mb-2 text-2xl font-semibold text-brand-800">Link invalid</h1>
+        <p className="text-neutral-600">
+          This link is invalid or has already been used. If you were setting a password from an invite, ask your
+          school admin to send a new one. If you were resetting your password, request a new reset link and try
+          again.
+        </p>
       </main>
     );
   }
@@ -71,25 +85,21 @@ export default function SetPasswordPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium text-neutral-700">Password</span>
-            <input
-              type="password"
+            <PasswordInput
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="min-h-control rounded-lg border border-neutral-300 px-3 text-base focus:border-brand-500 focus:outline-none"
               autoComplete="new-password"
             />
           </label>
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium text-neutral-700">Confirm password</span>
-            <input
-              type="password"
+            <PasswordInput
               required
               minLength={8}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="min-h-control rounded-lg border border-neutral-300 px-3 text-base focus:border-brand-500 focus:outline-none"
               autoComplete="new-password"
             />
           </label>

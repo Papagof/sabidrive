@@ -5,5 +5,6 @@ export * from "./components/Banner";
 export * from "./components/Logo";
 export * from "./components/TripMap";
 export * from "./components/AddressSearch";
+export * from "./components/PasswordInput";
 export * from "./tokens/colors";
 export * from "./tokens/spacing";

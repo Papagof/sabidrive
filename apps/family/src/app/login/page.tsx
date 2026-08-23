@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card } from "@sabidrive/ui";
+import { Banner, Button, Card, PasswordInput } from "@sabidrive/ui";
 import { useSession, useSupabaseClient, userQueries } from "@sabidrive/supabase";
 
 export default function LoginPage() {
@@ -10,11 +10,13 @@ export default function LoginPage() {
   const router = useRouter();
   const { session, profile, isLoading } = useSession();
   const [method, setMethod] = useState<"email" | "phone">("email");
+  const [view, setView] = useState<"signin" | "forgot">("signin");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     if (!isLoading && session && profile) {
@@ -40,6 +42,65 @@ export default function LoginPage() {
         setIsSubmitting(false);
       }
     }
+  }
+
+  async function handleForgotPassword(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/set-password`
+    });
+    setIsSubmitting(false);
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+    setResetSent(true);
+  }
+
+  if (view === "forgot") {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+        <h1 className="mb-6 text-neutral-600">Reset your password.</h1>
+        <Card>
+          {resetSent ? (
+            <Banner tone="info" title="Check your email">
+              If an account exists for {email}, a password reset link is on its way.
+            </Banner>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-neutral-700">Email</span>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="min-h-control rounded-lg border border-neutral-300 px-3 text-base focus:border-brand-500 focus:outline-none"
+                  autoComplete="email"
+                />
+              </label>
+              {error ? <p className="text-sm text-critical-600">{error}</p> : null}
+              <Button type="submit" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? "Sending..." : "Send reset link"}
+              </Button>
+            </form>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setView("signin");
+              setResetSent(false);
+              setError(null);
+            }}
+            className="mt-4 text-sm text-brand-700"
+          >
+            ← Back to sign in
+          </button>
+        </Card>
+      </main>
+    );
   }
 
   return (
@@ -95,12 +156,10 @@ export default function LoginPage() {
           )}
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium text-neutral-700">Password</span>
-            <input
-              type="password"
+            <PasswordInput
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="min-h-control rounded-lg border border-neutral-300 px-3 text-base focus:border-brand-500 focus:outline-none"
               autoComplete="current-password"
             />
           </label>
@@ -109,6 +168,18 @@ export default function LoginPage() {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
         </form>
+        {method === "email" ? (
+          <button
+            type="button"
+            onClick={() => {
+              setView("forgot");
+              setError(null);
+            }}
+            className="mt-4 text-sm text-brand-700"
+          >
+            Forgot password?
+          </button>
+        ) : null}
       </Card>
     </main>
   );
