@@ -15,6 +15,7 @@ interface BusRow {
   id: string;
   label: string;
   status: string;
+  retired_at: string | null;
   driver: { id: string; full_name: string; verification_status: VerificationStatus | null } | null;
   routes: { id: string; name: string } | null;
 }
@@ -54,7 +55,9 @@ export default function BusesPage() {
 
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteBlockedByHistory, setDeleteBlockedByHistory] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRetiring, setIsRetiring] = useState<string | null>(null);
 
   async function refetch() {
     if (!profile?.school_id) return;
@@ -110,14 +113,29 @@ export default function BusesPage() {
   async function handleDelete(busId: string) {
     setIsDeleting(true);
     setDeleteError(null);
+    setDeleteBlockedByHistory(false);
     try {
       await adminQueries.deleteBus(supabase, busId);
       setConfirmingDeleteId(null);
       await refetch();
     } catch (err) {
+      setDeleteBlockedByHistory(err instanceof adminQueries.BusHasTripHistoryError);
       setDeleteError(err instanceof Error ? err.message : "Failed to delete bus");
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function handleToggleRetire(bus: BusRow) {
+    setIsRetiring(bus.id);
+    try {
+      await adminQueries.setBusRetired(supabase, bus.id, !bus.retired_at);
+      setConfirmingDeleteId(null);
+      setDeleteError(null);
+      setDeleteBlockedByHistory(false);
+      await refetch();
+    } finally {
+      setIsRetiring(null);
     }
   }
 
@@ -266,31 +284,62 @@ export default function BusesPage() {
                       </button>
                     ) : null}
                     <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
-                    <Button variant="secondary" onClick={() => startEdit(bus)}>
-                      Edit
-                    </Button>
+                    {bus.retired_at ? <StatusPill label="Retired" tone="caution" /> : null}
+                    {!bus.retired_at ? (
+                      <Button variant="secondary" onClick={() => startEdit(bus)}>
+                        Edit
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
-                {confirmingDeleteId === bus.id ? (
-                  <div className="flex items-center gap-2">
-                    {deleteError ? <p className="flex-1 text-sm text-critical-600">{deleteError}</p> : <span className="flex-1 text-sm text-neutral-500">Delete this bus?</span>}
-                    <Button variant="secondary" disabled={isDeleting} onClick={() => handleDelete(bus.id)}>
-                      {isDeleting ? "Deleting..." : "Confirm delete"}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setConfirmingDeleteId(null);
-                        setDeleteError(null);
-                      }}
-                    >
-                      Cancel
-                    </Button>
+
+                {bus.retired_at ? (
+                  <Button
+                    variant="ghost"
+                    className="self-start"
+                    disabled={isRetiring === bus.id}
+                    onClick={() => handleToggleRetire(bus)}
+                  >
+                    {isRetiring === bus.id ? "Restoring..." : "Restore"}
+                  </Button>
+                ) : confirmingDeleteId === bus.id ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      {deleteError ? <p className="flex-1 text-sm text-critical-600">{deleteError}</p> : <span className="flex-1 text-sm text-neutral-500">Delete this bus?</span>}
+                      <Button variant="secondary" disabled={isDeleting} onClick={() => handleDelete(bus.id)}>
+                        {isDeleting ? "Deleting..." : "Confirm delete"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          setConfirmingDeleteId(null);
+                          setDeleteError(null);
+                          setDeleteBlockedByHistory(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    {deleteBlockedByHistory ? (
+                      <Button
+                        variant="secondary"
+                        className="self-start"
+                        disabled={isRetiring === bus.id}
+                        onClick={() => handleToggleRetire(bus)}
+                      >
+                        {isRetiring === bus.id ? "Retiring..." : "Retire instead"}
+                      </Button>
+                    ) : null}
                   </div>
                 ) : (
-                  <Button variant="ghost" className="self-start" onClick={() => setConfirmingDeleteId(bus.id)}>
-                    Delete
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => setConfirmingDeleteId(bus.id)}>
+                      Delete
+                    </Button>
+                    <Button variant="ghost" disabled={isRetiring === bus.id} onClick={() => handleToggleRetire(bus)}>
+                      {isRetiring === bus.id ? "Retiring..." : "Retire"}
+                    </Button>
+                  </div>
                 )}
               </Card>
             )

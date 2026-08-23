@@ -162,21 +162,47 @@ export async function updateBus(supabase: SabiDriveSupabaseClient, busId: string
   if (error) throw error;
 }
 
+/** Thrown by deleteBus specifically when the bus has trip history -- lets the UI offer "Retire instead" rather than just showing an error. */
+export class BusHasTripHistoryError extends Error {
+  constructor() {
+    super("This bus has trip history and can't be deleted.");
+    this.name = "BusHasTripHistoryError";
+  }
+}
+
 /**
  * Deletes a bus that has never run a trip. trips.bus_id has no ON DELETE
  * cascade/set-null (0029_bus_deletion.sql, on purpose) so a bus with trip
  * history fails this with a foreign-key violation (Postgres code 23503)
- * instead of silently erasing that history -- surfaced here as a message
- * telling the admin why, rather than a raw database error.
+ * instead of silently erasing that history -- surfaced as BusHasTripHistoryError
+ * rather than a raw database error.
  */
 export async function deleteBus(supabase: SabiDriveSupabaseClient, busId: string) {
   const { error } = await supabase.from("buses").delete().eq("id", busId);
   if (error) {
     if (error.code === "23503") {
-      throw new Error("This bus has trip history and can't be deleted.");
+      throw new BusHasTripHistoryError();
     }
     throw error;
   }
+}
+
+/**
+ * Reversible alternative to deleteBus for a bus that has trip history and
+ * so can't be hard-deleted: marks it retired (off the active Buses page)
+ * and clears its current driver/route/attendant assignment, without
+ * touching any trip/check-in/attendance record. "Restore" undoes it.
+ */
+export async function setBusRetired(supabase: SabiDriveSupabaseClient, busId: string, retired: boolean) {
+  const { error } = await supabase
+    .from("buses")
+    .update(
+      retired
+        ? { retired_at: new Date().toISOString(), driver_id: null, attendant_id: null, default_route_id: null }
+        : { retired_at: null }
+    )
+    .eq("id", busId);
+  if (error) throw error;
 }
 
 export interface CreateStudentInput {

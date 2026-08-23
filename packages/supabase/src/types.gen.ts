@@ -182,6 +182,7 @@ export type Database = {
           id: string
           label: string
           license_plate: string | null
+          retired_at: string | null
           school_id: string
           status: string
         }
@@ -195,6 +196,7 @@ export type Database = {
           id?: string
           label: string
           license_plate?: string | null
+          retired_at?: string | null
           school_id: string
           status?: string
         }
@@ -208,6 +210,7 @@ export type Database = {
           id?: string
           label?: string
           license_plate?: string | null
+          retired_at?: string | null
           school_id?: string
           status?: string
         }
