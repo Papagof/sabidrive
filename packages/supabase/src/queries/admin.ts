@@ -10,6 +10,34 @@ export async function getSchoolRoutes(supabase: SabiDriveSupabaseClient, schoolI
   return data;
 }
 
+/** Thrown by deleteRoute specifically when the route has trip history -- lets the UI explain why, instead of a raw error. */
+export class RouteHasTripHistoryError extends Error {
+  constructor() {
+    super("This route has trip history and can't be deleted.");
+    this.name = "RouteHasTripHistoryError";
+  }
+}
+
+/**
+ * Deletes a route that's no longer in use. trips.route_id has no ON DELETE
+ * cascade/set-null (same RESTRICT-by-default protection as trips.bus_id,
+ * 0029_bus_deletion.sql), so a route that ever had a trip run on it fails
+ * with a foreign-key violation (23503) instead of losing that history.
+ * Deleting also cascades away the route's own stops (they have no meaning
+ * without it) and clears default_route_id on any bus/student still
+ * pointing at it, rather than blocking on that -- those are just
+ * assignment pointers, not history.
+ */
+export async function deleteRoute(supabase: SabiDriveSupabaseClient, routeId: string) {
+  const { error } = await supabase.from("routes").delete().eq("id", routeId);
+  if (error) {
+    if (error.code === "23503") {
+      throw new RouteHasTripHistoryError();
+    }
+    throw error;
+  }
+}
+
 export async function getSchoolBuses(supabase: SabiDriveSupabaseClient, schoolId: string) {
   const { data, error } = await supabase
     .from("buses")
