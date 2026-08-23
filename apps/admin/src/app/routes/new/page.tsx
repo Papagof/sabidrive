@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/AdminShell";
@@ -20,8 +20,24 @@ export default function NewRoutePage() {
   const [direction, setDirection] = useState<"pickup" | "dropoff">("pickup");
   const [points, setPoints] = useState<MapPoint[]>([]);
   const [panTo, setPanTo] = useState<MapPoint | null>(null);
+  const [schoolCenter, setSchoolCenter] = useState<MapPoint | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!profile?.school_id) return;
+    adminQueries.getSchool(supabase, profile.school_id).then((data) => {
+      const school = data as unknown as { geofence_lat: number | null; geofence_lng: number | null };
+      if (school.geofence_lat != null && school.geofence_lng != null) {
+        const center = { lat: school.geofence_lat, lng: school.geofence_lng };
+        setSchoolCenter(center);
+        // The map may have already mounted (at the DEFAULT_CENTER fallback) before this
+        // fetch resolved, and `center` only sets a map's *initial* view -- panTo re-centers
+        // an already-mounted map, same mechanism AddressSearch uses.
+        setPanTo(center);
+      }
+    });
+  }, [supabase, profile?.school_id]);
 
   if (isLoading) return null;
 
@@ -94,7 +110,12 @@ export default function NewRoutePage() {
           </Button>
         </Card>
         <div className="h-[28rem] overflow-hidden rounded-2xl border border-neutral-200">
-          <ClickToAddMap points={points} onAddPoint={(p) => setPoints((prev) => [...prev, p])} panTo={panTo} />
+          <ClickToAddMap
+            points={points}
+            onAddPoint={(p) => setPoints((prev) => [...prev, p])}
+            center={schoolCenter}
+            panTo={panTo}
+          />
         </div>
       </div>
     </AdminShell>
