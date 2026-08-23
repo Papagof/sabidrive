@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
 import type { MapStop } from "@sabidrive/ui";
-import { studentQueries, tripQueries, userQueries, useNotifications, useSupabaseClient, useTripLocation } from "@sabidrive/supabase";
+import { studentQueries, tripQueries, userQueries, useNotifications, useStaleness, useSupabaseClient, useTripLocation } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 const TripMap = dynamic(() => import("@sabidrive/ui").then((m) => m.TripMap), { ssr: false });
@@ -50,6 +50,7 @@ export default function StudentTrackingPage() {
   const [codeCooldown, setCodeCooldown] = useState<"board" | "alight" | null>(null);
 
   const { current } = useTripLocation(tripId);
+  const { isStale, secondsAgo } = useStaleness(current?.recordedAt ?? null);
   const { notifications } = useNotifications(profile?.id ?? null);
   const studentNotifications = notifications.filter((n) => n.related_student_id === studentId);
 
@@ -149,7 +150,13 @@ export default function StudentTrackingPage() {
           <div className="h-64 overflow-hidden rounded-2xl border border-neutral-200">
             <TripMap busPosition={current ? { lat: current.lat, lng: current.lng } : null} stops={stops} highlightStopId={stop?.id} />
           </div>
-          <Banner tone="info" title={etaMinutes != null ? `Arriving in about ${etaMinutes} min` : "Tracking bus…"} />
+          {isStale && secondsAgo != null ? (
+            <Banner tone="caution" title={`Location last updated ${Math.round(secondsAgo / 60) || 1} min ago`}>
+              The bus may be out of signal, or the driver&apos;s phone may be off. The school can see this too.
+            </Banner>
+          ) : (
+            <Banner tone="info" title={etaMinutes != null ? `Arriving in about ${etaMinutes} min` : "Tracking bus…"} />
+          )}
         </>
       ) : (
         <Card>

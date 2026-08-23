@@ -56,7 +56,8 @@ export function useFleetTrips() {
             lng: row.lng as number,
             headingDeg: (row.heading_deg as number | null) ?? null,
             speedKmh: (row.speed_kmh as number | null) ?? null,
-            recordedAt: row.recorded_at as string
+            recordedAt: row.recorded_at as string,
+            source: (row.source as "gps" | "manual" | undefined) ?? "gps"
           }
         }));
       })

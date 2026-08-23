@@ -17,6 +17,7 @@ interface BusRow {
   status: string;
   retired_at: string | null;
   driver: { id: string; full_name: string; verification_status: VerificationStatus | null } | null;
+  attendant: { id: string; full_name: string } | null;
   routes: { id: string; name: string } | null;
 }
 
@@ -42,6 +43,7 @@ export default function BusesPage() {
 
   const [label, setLabel] = useState("");
   const [driverId, setDriverId] = useState("");
+  const [attendantId, setAttendantId] = useState("");
   const [routeId, setRouteId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,6 +51,7 @@ export default function BusesPage() {
 
   const [editingBusId, setEditingBusId] = useState<string | null>(null);
   const [editDriverId, setEditDriverId] = useState("");
+  const [editAttendantId, setEditAttendantId] = useState("");
   const [editRouteId, setEditRouteId] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
@@ -84,6 +87,7 @@ export default function BusesPage() {
   function startEdit(bus: BusRow) {
     setEditingBusId(bus.id);
     setEditDriverId(bus.driver?.id ?? UNASSIGNED);
+    setEditAttendantId(bus.attendant?.id ?? UNASSIGNED);
     setEditRouteId(bus.routes?.id ?? UNASSIGNED);
     setEditError(null);
   }
@@ -99,6 +103,7 @@ export default function BusesPage() {
     try {
       await adminQueries.updateBus(supabase, busId, {
         driver_id: editDriverId === UNASSIGNED ? null : editDriverId,
+        attendant_id: editAttendantId === UNASSIGNED ? null : editAttendantId,
         default_route_id: editRouteId === UNASSIGNED ? null : editRouteId
       });
       setEditingBusId(null);
@@ -149,10 +154,12 @@ export default function BusesPage() {
         school_id: profile.school_id,
         label,
         driver_id: driverId || null,
+        attendant_id: attendantId || null,
         default_route_id: routeId || null
       });
       setLabel("");
       setDriverId("");
+      setAttendantId("");
       setRouteId("");
       await refetch();
     } catch (err) {
@@ -208,6 +215,18 @@ export default function BusesPage() {
               />
             ) : null}
             <select
+              value={attendantId}
+              onChange={(e) => setAttendantId(e.target.value)}
+              className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+            >
+              <option value="">Assign backup driver (attendant)…</option>
+              {drivers.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.full_name}
+                </option>
+              ))}
+            </select>
+            <select
               value={routeId}
               onChange={(e) => setRouteId(e.target.value)}
               className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
@@ -244,6 +263,18 @@ export default function BusesPage() {
                   ))}
                 </select>
                 <select
+                  value={editAttendantId}
+                  onChange={(e) => setEditAttendantId(e.target.value)}
+                  className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+                >
+                  <option value={UNASSIGNED}>No backup driver (attendant)</option>
+                  {drivers.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.full_name}
+                    </option>
+                  ))}
+                </select>
+                <select
                   value={editRouteId}
                   onChange={(e) => setEditRouteId(e.target.value)}
                   className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
@@ -271,7 +302,8 @@ export default function BusesPage() {
                   <div>
                     <p className="font-medium">{bus.label}</p>
                     <p className="text-sm text-neutral-500">
-                      {bus.driver?.full_name ?? "No driver"} · {bus.routes?.name ?? "No route"}
+                      {bus.driver?.full_name ?? "No driver"}
+                      {bus.attendant ? ` (backup: ${bus.attendant.full_name})` : ""} · {bus.routes?.name ?? "No route"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

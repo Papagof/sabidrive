@@ -12,6 +12,17 @@ export async function endTrip(supabase: SabiDriveSupabaseClient, tripId: string)
   if (error) throw error;
 }
 
+/**
+ * Admin-only last resort when every phone on the bus is unreachable: sets
+ * the bus's approximate position from a phone call or other out-of-band
+ * report. Recorded with trip_locations.source = 'manual' so it's never
+ * confused with real GPS telemetry.
+ */
+export async function recordManualTripLocation(supabase: SabiDriveSupabaseClient, tripId: string, lat: number, lng: number) {
+  const { error } = await supabase.rpc("record_manual_trip_location", { p_trip_id: tripId, p_lat: lat, p_lng: lng });
+  if (error) throw error;
+}
+
 export async function checkIn(
   supabase: SabiDriveSupabaseClient,
   tripId: string,

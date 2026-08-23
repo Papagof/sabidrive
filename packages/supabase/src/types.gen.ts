@@ -845,6 +845,7 @@ export type Database = {
           lat: number
           lng: number
           recorded_at: string
+          source: string
           speed_kmh: number | null
           trip_id: string
         }
@@ -854,6 +855,7 @@ export type Database = {
           lat: number
           lng: number
           recorded_at?: string
+          source?: string
           speed_kmh?: number | null
           trip_id: string
         }
@@ -863,6 +865,7 @@ export type Database = {
           lat?: number
           lng?: number
           recorded_at?: string
+          source?: string
           speed_kmh?: number | null
           trip_id?: string
         }
@@ -1040,7 +1043,12 @@ export type Database = {
       current_school_id: { Args: never; Returns: string }
       end_trip: { Args: { p_trip_id: string }; Returns: undefined }
       is_guardian_of: { Args: { target_student_id: string }; Returns: boolean }
+      is_trip_crew: { Args: { p_trip_id: string }; Returns: boolean }
       purge_old_data: { Args: never; Returns: undefined }
+      record_manual_trip_location: {
+        Args: { p_lat: number; p_lng: number; p_trip_id: string }
+        Returns: undefined
+      }
       record_trip_location: {
         Args: {
           p_deviation_m?: number

@@ -9,6 +9,8 @@ export interface TripPoint {
   headingDeg: number | null;
   speedKmh: number | null;
   recordedAt: string;
+  /** 'gps' (driver/attendant phone) or 'manual' (admin last-resort override) -- see 0032_manual_trip_location.sql. */
+  source: "gps" | "manual";
 }
 
 export interface TripLocationState {
@@ -24,7 +26,8 @@ function toTripPoint(row: Record<string, unknown>): TripPoint {
     lng: row.lng as number,
     headingDeg: (row.heading_deg as number | null) ?? null,
     speedKmh: (row.speed_kmh as number | null) ?? null,
-    recordedAt: row.recorded_at as string
+    recordedAt: row.recorded_at as string,
+    source: (row.source as "gps" | "manual" | undefined) ?? "gps"
   };
 }
 

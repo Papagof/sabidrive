@@ -13,7 +13,9 @@ export async function getSchoolRoutes(supabase: SabiDriveSupabaseClient, schoolI
 export async function getSchoolBuses(supabase: SabiDriveSupabaseClient, schoolId: string) {
   const { data, error } = await supabase
     .from("buses")
-    .select("*, driver:driver_id(id, full_name, verification_status), routes:default_route_id(id, name)")
+    .select(
+      "*, driver:driver_id(id, full_name, verification_status), attendant:attendant_id(id, full_name), routes:default_route_id(id, name)"
+    )
     .eq("school_id", schoolId)
     .order("label");
   if (error) throw error;
@@ -141,6 +143,7 @@ export interface CreateBusInput {
   license_plate?: string;
   capacity?: number;
   driver_id?: string | null;
+  attendant_id?: string | null;
   default_route_id?: string | null;
 }
 
@@ -153,6 +156,7 @@ export async function createBus(supabase: SabiDriveSupabaseClient, input: Create
 export interface UpdateBusInput {
   label?: string;
   driver_id?: string | null;
+  attendant_id?: string | null;
   default_route_id?: string | null;
 }
 
