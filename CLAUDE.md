@@ -44,6 +44,8 @@ Two separate Vercel projects under the `godfrey5` team, one per app — matches 
 - **`family`** → https://family-six-theta.vercel.app
 - **`admin`** → https://admin-nine-tau-50.vercel.app
 
+Since these are two separate deployments with no shared entry point, `apps/family/src/app/start/page.tsx` (**https://family-six-theta.vercel.app/start**) is a single unified landing page linking out to both: "Parent or Driver" stays in the family app (`/login`), "School Admin" is a plain external link to the admin app's `/login`. It's additive — the existing root-page auto-redirect logic in both apps (straight to `/login` or a role home, depending on session) is untouched, so this doesn't change any existing sign-in flow, it's just a new front door for someone who doesn't already have either URL bookmarked.
+
 Each project's **Root Directory** is set (via the Vercel API/dashboard, `Settings → General → Root Directory`) to `apps/family` / `apps/admin` respectively — required for Vercel to correctly detect the pnpm workspace and run `pnpm install` at the true monorepo root rather than treating the subfolder as an isolated project (a plain `vercel deploy` run *from inside* `apps/family` uploads only that subfolder and fails with `npm install` errors — confirmed the hard way).
 
 **Both projects are Git-connected to `Papagof/sabidrive`** (production branch `main`) via the Vercel GitHub App — every push to `main` auto-deploys both `family` and `admin` in parallel, each building from its own Root Directory. No CLI step needed for normal deploys.
