@@ -21,6 +21,13 @@ interface NominatimResult {
   lon: string;
 }
 
+// Lagos, Nigeria metro-area bounding box (lon1,lat1,lon2,lat2) -- every
+// school this app currently serves is there, so results are hard-restricted
+// to it (bounded=1) rather than just biased, to keep a search like "Ikeja"
+// or "Main Street" from surfacing irrelevant matches worldwide. Revisit
+// (make this per-school/configurable) once schools outside Lagos onboard.
+const LAGOS_VIEWBOX = "2.9,6.7,3.7,6.35";
+
 /**
  * Address lookup for the admin route/stop builder, backed by OpenStreetMap's
  * free Nominatim search -- same source as the map tiles TripMap/FleetMap/
@@ -44,7 +51,7 @@ export function AddressSearch({ onSelect, placeholder, className }: AddressSearc
     setResults([]);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(trimmed)}`
+        `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=ng&viewbox=${LAGOS_VIEWBOX}&bounded=1&q=${encodeURIComponent(trimmed)}`
       );
       if (!res.ok) throw new Error("Address search failed");
       const data = (await res.json()) as NominatimResult[];
