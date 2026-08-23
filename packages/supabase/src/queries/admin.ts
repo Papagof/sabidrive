@@ -162,6 +162,23 @@ export async function updateBus(supabase: SabiDriveSupabaseClient, busId: string
   if (error) throw error;
 }
 
+/**
+ * Deletes a bus that has never run a trip. trips.bus_id has no ON DELETE
+ * cascade/set-null (0029_bus_deletion.sql, on purpose) so a bus with trip
+ * history fails this with a foreign-key violation (Postgres code 23503)
+ * instead of silently erasing that history -- surfaced here as a message
+ * telling the admin why, rather than a raw database error.
+ */
+export async function deleteBus(supabase: SabiDriveSupabaseClient, busId: string) {
+  const { error } = await supabase.from("buses").delete().eq("id", busId);
+  if (error) {
+    if (error.code === "23503") {
+      throw new Error("This bus has trip history and can't be deleted.");
+    }
+    throw error;
+  }
+}
+
 export interface CreateStudentInput {
   school_id: string;
   first_name: string;

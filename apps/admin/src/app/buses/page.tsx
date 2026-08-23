@@ -52,6 +52,10 @@ export default function BusesPage() {
   const [editError, setEditError] = useState<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   async function refetch() {
     if (!profile?.school_id) return;
     const busData = await adminQueries.getSchoolBuses(supabase, profile.school_id);
@@ -100,6 +104,20 @@ export default function BusesPage() {
       setEditError(err instanceof Error ? err.message : "Failed to update bus");
     } finally {
       setIsSavingEdit(false);
+    }
+  }
+
+  async function handleDelete(busId: string) {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await adminQueries.deleteBus(supabase, busId);
+      setConfirmingDeleteId(null);
+      await refetch();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Failed to delete bus");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -230,27 +248,50 @@ export default function BusesPage() {
                 </div>
               </Card>
             ) : (
-              <Card key={bus.id} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{bus.label}</p>
-                  <p className="text-sm text-neutral-500">
-                    {bus.driver?.full_name ?? "No driver"} · {bus.routes?.name ?? "No route"}
-                  </p>
+              <Card key={bus.id} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{bus.label}</p>
+                    <p className="text-sm text-neutral-500">
+                      {bus.driver?.full_name ?? "No driver"} · {bus.routes?.name ?? "No route"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {bus.driver ? (
+                      <button onClick={() => handleCycleVerification(bus.driver!.id, bus.driver!.verification_status)}>
+                        <StatusPill
+                          label={`driver: ${bus.driver.verification_status ?? "pending"}`}
+                          tone={statusToneMap[bus.driver.verification_status ?? "pending"] ?? "neutral"}
+                        />
+                      </button>
+                    ) : null}
+                    <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
+                    <Button variant="secondary" onClick={() => startEdit(bus)}>
+                      Edit
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {bus.driver ? (
-                    <button onClick={() => handleCycleVerification(bus.driver!.id, bus.driver!.verification_status)}>
-                      <StatusPill
-                        label={`driver: ${bus.driver.verification_status ?? "pending"}`}
-                        tone={statusToneMap[bus.driver.verification_status ?? "pending"] ?? "neutral"}
-                      />
-                    </button>
-                  ) : null}
-                  <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
-                  <Button variant="secondary" onClick={() => startEdit(bus)}>
-                    Edit
+                {confirmingDeleteId === bus.id ? (
+                  <div className="flex items-center gap-2">
+                    {deleteError ? <p className="flex-1 text-sm text-critical-600">{deleteError}</p> : <span className="flex-1 text-sm text-neutral-500">Delete this bus?</span>}
+                    <Button variant="secondary" disabled={isDeleting} onClick={() => handleDelete(bus.id)}>
+                      {isDeleting ? "Deleting..." : "Confirm delete"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setConfirmingDeleteId(null);
+                        setDeleteError(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="ghost" className="self-start" onClick={() => setConfirmingDeleteId(bus.id)}>
+                    Delete
                   </Button>
-                </div>
+                )}
               </Card>
             )
           )}
