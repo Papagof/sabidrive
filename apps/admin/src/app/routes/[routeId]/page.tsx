@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Button, Card } from "@sabidrive/ui";
+import { AddressSearch, Button, Card } from "@sabidrive/ui";
 import type { MapPoint } from "@sabidrive/ui";
 import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
 
@@ -35,6 +35,7 @@ export default function RouteDetailPage() {
   const [route, setRoute] = useState<RouteDetail | null>(null);
   const [stops, setStops] = useState<StopRow[]>([]);
   const [pendingPoint, setPendingPoint] = useState<MapPoint | null>(null);
+  const [panTo, setPanTo] = useState<MapPoint | null>(null);
   const [stopName, setStopName] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -102,8 +103,15 @@ export default function RouteDetailPage() {
             </ol>
           </Card>
 
-          <Card>
-            <h2 className="mb-2 font-medium">Add a stop</h2>
+          <Card className="flex flex-col gap-3">
+            <h2 className="font-medium">Add a stop</h2>
+            <AddressSearch
+              placeholder="Search an address for this stop…"
+              onSelect={(r) => {
+                setPendingPoint({ lat: r.lat, lng: r.lng });
+                setPanTo({ lat: r.lat, lng: r.lng });
+              }}
+            />
             {pendingPoint ? (
               <form onSubmit={handleAddStop} className="flex flex-col gap-2">
                 <p className="text-xs text-neutral-500">
@@ -133,7 +141,7 @@ export default function RouteDetailPage() {
                 </div>
               </form>
             ) : (
-              <p className="text-sm text-neutral-500">Click the map to place a stop.</p>
+              <p className="text-sm text-neutral-500">Search an address above, or click the map, to place a stop.</p>
             )}
           </Card>
         </div>
@@ -142,6 +150,7 @@ export default function RouteDetailPage() {
             points={markerPoints}
             center={route?.polyline?.[0]}
             onAddPoint={(p) => setPendingPoint(p)}
+            panTo={panTo}
           />
         </div>
       </div>

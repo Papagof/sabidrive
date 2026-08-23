@@ -105,6 +105,8 @@ export interface ClickToAddMapProps {
   points: MapPoint[];
   onAddPoint: (point: MapPoint) => void;
   center?: MapPoint;
+  /** Pans the map here whenever it changes -- e.g. after picking an AddressSearch result -- without affecting the map's one-time initial `center`. */
+  panTo?: MapPoint | null;
 }
 
 function ClickCapture({ onAddPoint }: { onAddPoint: (point: MapPoint) => void }) {
@@ -122,7 +124,7 @@ function ClickCapture({ onAddPoint }: { onAddPoint: (point: MapPoint) => void })
 }
 
 /** Click-to-append route/stop editor used by the admin route builder. */
-export function ClickToAddMap({ points, onAddPoint, center }: ClickToAddMapProps) {
+export function ClickToAddMap({ points, onAddPoint, center, panTo }: ClickToAddMapProps) {
   const mapCenter = center ?? points[0] ?? DEFAULT_CENTER;
 
   return (
@@ -137,6 +139,7 @@ export function ClickToAddMap({ points, onAddPoint, center }: ClickToAddMapProps
           <Popup>Point {i + 1}</Popup>
         </Marker>
       ))}
+      {panTo ? <Recenter lat={panTo.lat} lng={panTo.lng} /> : null}
     </MapContainer>
   );
 }

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Banner, Button, Card } from "@sabidrive/ui";
+import { AddressSearch, Banner, Button, Card } from "@sabidrive/ui";
 import type { MapPoint } from "@sabidrive/ui";
 import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
 
@@ -19,6 +19,7 @@ export default function NewRoutePage() {
   const [name, setName] = useState("");
   const [direction, setDirection] = useState<"pickup" | "dropoff">("pickup");
   const [points, setPoints] = useState<MapPoint[]>([]);
+  const [panTo, setPanTo] = useState<MapPoint | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -72,8 +73,15 @@ export default function NewRoutePage() {
               <option value="dropoff">Dropoff</option>
             </select>
           </label>
+          <AddressSearch
+            placeholder="Search an address to add as a point…"
+            onSelect={(r) => {
+              setPoints((prev) => [...prev, { lat: r.lat, lng: r.lng }]);
+              setPanTo({ lat: r.lat, lng: r.lng });
+            }}
+          />
           <Banner tone="info" title={`${points.length} point(s) on path`}>
-            Click the map to add points along the road the bus will drive. Add at least two.
+            Search an address or click the map to add points along the road the bus will drive. Add at least two.
           </Banner>
           {points.length > 0 ? (
             <Button variant="secondary" onClick={() => setPoints((p) => p.slice(0, -1))}>
@@ -86,7 +94,7 @@ export default function NewRoutePage() {
           </Button>
         </Card>
         <div className="h-[28rem] overflow-hidden rounded-2xl border border-neutral-200">
-          <ClickToAddMap points={points} onAddPoint={(p) => setPoints((prev) => [...prev, p])} />
+          <ClickToAddMap points={points} onAddPoint={(p) => setPoints((prev) => [...prev, p])} panTo={panTo} />
         </div>
       </div>
     </AdminShell>

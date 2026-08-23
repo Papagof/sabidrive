@@ -4,5 +4,6 @@ export * from "./components/Card";
 export * from "./components/Banner";
 export * from "./components/Logo";
 export * from "./components/TripMap";
+export * from "./components/AddressSearch";
 export * from "./tokens/colors";
 export * from "./tokens/spacing";
