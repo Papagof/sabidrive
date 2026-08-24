@@ -21,12 +21,16 @@ export default function DriverHomePage() {
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [bus, setBus] = useState<DriverBus | null>(null);
+  const [isBusLoading, setIsBusLoading] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile) return;
-    tripQueries.getDriverBus(supabase, profile.id).then((data) => setBus(data as unknown as DriverBus));
+    tripQueries
+      .getDriverBus(supabase, profile.id)
+      .then((data) => setBus(data as unknown as DriverBus))
+      .finally(() => setIsBusLoading(false));
   }, [supabase, profile]);
 
   async function handleStartTrip() {
@@ -43,10 +47,31 @@ export default function DriverHomePage() {
     }
   }
 
-  if (isLoading || !bus) {
+  if (isLoading || isBusLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-neutral-500">Loading your bus…</p>
+      </main>
+    );
+  }
+
+  if (!bus) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
+        <h1 className="text-xl font-semibold text-brand-800">No bus assigned yet</h1>
+        <p className="text-neutral-600">
+          Your school admin hasn&apos;t assigned you to a bus yet. Check back once they&apos;ve set you up on
+          the Buses page.
+        </p>
+        <button
+          className="text-sm text-neutral-500 hover:text-neutral-800"
+          onClick={async () => {
+            await supabase.auth.signOut();
+            router.replace("/login");
+          }}
+        >
+          Sign out
+        </button>
       </main>
     );
   }
