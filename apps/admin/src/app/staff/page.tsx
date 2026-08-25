@@ -16,19 +16,55 @@ interface StaffRow {
   deactivated_at: string | null;
 }
 
+interface DriverBusRow {
+  id: string;
+  driver: { id: string } | null;
+  attendant: { id: string } | null;
+  routes: { id: string; name: string } | null;
+}
+
+interface RouteOption {
+  id: string;
+  name: string;
+}
+
+const NO_ROUTE = "__no_route__";
+
 export default function StaffPage() {
   const { profile, isLoading } = useRequireAdmin();
   const supabase = useSupabaseClient();
   const [people, setPeople] = useState<StaffRow[]>([]);
+  const [buses, setBuses] = useState<DriverBusRow[]>([]);
+  const [routes, setRoutes] = useState<RouteOption[]>([]);
   const [invitingRole, setInvitingRole] = useState<"driver" | "parent" | "admin" | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [isReassigningRoute, setIsReassigningRoute] = useState<string | null>(null);
 
   async function refetch() {
     if (!profile?.school_id) return;
-    const data = await adminQueries.getSchoolStaffAndGuardians(supabase, profile.school_id);
-    setPeople(data as unknown as StaffRow[]);
+    const [staffData, busData, routeData] = await Promise.all([
+      adminQueries.getSchoolStaffAndGuardians(supabase, profile.school_id),
+      adminQueries.getSchoolBuses(supabase, profile.school_id),
+      adminQueries.getSchoolRoutes(supabase, profile.school_id)
+    ]);
+    setPeople(staffData as unknown as StaffRow[]);
+    setBuses(busData as unknown as DriverBusRow[]);
+    setRoutes((routeData as unknown as RouteOption[]).map((r) => ({ id: r.id, name: r.name })));
+  }
+
+  async function handleReassignRoute(bus: DriverBusRow, routeId: string) {
+    setIsReassigningRoute(bus.id);
+    setActionError(null);
+    try {
+      await adminQueries.updateBus(supabase, bus.id, { default_route_id: routeId === NO_ROUTE ? null : routeId });
+      await refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to reassign route");
+    } finally {
+      setIsReassigningRoute(null);
+    }
   }
 
   async function handleToggleDriverActive(driver: StaffRow) {
@@ -125,7 +161,9 @@ export default function StaffPage() {
         <div>
           <h2 className="mb-2 text-lg font-medium">Drivers</h2>
           <div className="flex flex-col gap-2">
-            {drivers.map((d) => (
+            {drivers.map((d) => {
+              const bus = buses.find((b) => b.driver?.id === d.id || b.attendant?.id === d.id) ?? null;
+              return (
               <Card key={d.id} className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div>
@@ -140,6 +178,26 @@ export default function StaffPage() {
                     {d.deactivated_at ? <StatusPill label="Deactivated" tone="caution" /> : null}
                   </div>
                 </div>
+                <label className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-neutral-700">Route</span>
+                  {bus ? (
+                    <select
+                      value={bus.routes?.id ?? NO_ROUTE}
+                      onChange={(e) => void handleReassignRoute(bus, e.target.value)}
+                      disabled={isReassigningRoute === bus.id}
+                      className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+                    >
+                      <option value={NO_ROUTE}>No route</option>
+                      {routes.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-neutral-500">Not assigned to a bus yet — assign one from the Buses page first.</p>
+                  )}
+                </label>
                 {confirmingId === d.id ? (
                   <div className="flex gap-2">
                     <Button
@@ -167,7 +225,8 @@ export default function StaffPage() {
                   </Button>
                 )}
               </Card>
-            ))}
+              );
+            })}
             {drivers.length === 0 ? <p className="text-neutral-500">No drivers yet.</p> : null}
           </div>
         </div>
