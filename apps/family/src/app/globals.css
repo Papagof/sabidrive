@@ -7,24 +7,3 @@
 body {
   @apply bg-neutral-50 text-neutral-900;
 }
-
-@keyframes bus-drive {
-  from {
-    transform: translateX(-20vw);
-  }
-  to {
-    transform: translateX(120vw);
-  }
-}
-
-.animate-bus-drive {
-  animation-name: bus-drive;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-bus-drive {
-    animation: none;
-  }
-}
