@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Banner, Button, Card, PasswordInput } from "@sabidrive/ui";
+import { AnimatedBusesBackdrop, Banner, Button, Card, PasswordInput } from "@sabidrive/ui";
 import { useSession, useSupabaseClient, userQueries } from "@sabidrive/supabase";
 
 export default function LoginPage() {
@@ -61,8 +61,9 @@ export default function LoginPage() {
 
   if (view === "forgot") {
     return (
-      <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <h1 className="mb-6 text-neutral-600">Reset your password.</h1>
+      <main className="relative mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+        <AnimatedBusesBackdrop />
+        <h1 className="mb-6 rounded-xl bg-white/70 px-3 py-2 text-neutral-600 backdrop-blur-sm">Reset your password.</h1>
         <Card>
           {resetSent ? (
             <Banner tone="info" title="Check your email">
@@ -104,8 +105,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-      <h1 className="mb-6 text-neutral-600">Sign in to track your child&apos;s bus.</h1>
+    <main className="relative mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+      <AnimatedBusesBackdrop />
+      <h1 className="mb-6 rounded-xl bg-white/70 px-3 py-2 text-neutral-600 backdrop-blur-sm">
+        Sign in to track your child&apos;s bus.
+      </h1>
       <Card>
         <div className="mb-4 flex gap-1 rounded-lg bg-neutral-100 p-1">
           <button

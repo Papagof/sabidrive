@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Banner, Button, Card, PasswordInput } from "@sabidrive/ui";
+import { AnimatedBusesBackdrop, Banner, Button, Card, PasswordInput } from "@sabidrive/ui";
 import { useSession, useSupabaseClient } from "@sabidrive/supabase";
 
 // Admin has no set-password page of its own -- password-reset links land on
@@ -56,8 +56,9 @@ export default function LoginPage() {
 
   if (view === "forgot") {
     return (
-      <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <h1 className="mb-6 text-neutral-600">Reset your password.</h1>
+      <main className="relative mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+        <AnimatedBusesBackdrop />
+        <h1 className="mb-6 rounded-xl bg-white/70 px-3 py-2 text-neutral-600 backdrop-blur-sm">Reset your password.</h1>
         <Card>
           {resetSent ? (
             <Banner tone="info" title="Check your email">
@@ -99,8 +100,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-      <h1 className="mb-6 text-neutral-600">Sign in to manage routes, buses, and attendance.</h1>
+    <main className="relative mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+      <AnimatedBusesBackdrop />
+      <h1 className="mb-6 rounded-xl bg-white/70 px-3 py-2 text-neutral-600 backdrop-blur-sm">
+        Sign in to manage routes, buses, and attendance.
+      </h1>
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1">
