@@ -1065,6 +1065,7 @@ export type Database = {
         Args: { p_bus_id: string; p_direction?: string }
         Returns: string
       }
+      trigger_sos: { Args: { p_trip_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

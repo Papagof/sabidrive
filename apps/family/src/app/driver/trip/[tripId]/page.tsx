@@ -31,6 +31,8 @@ export default function DriverTripPage() {
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [isEnding, setIsEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sosStep, setSosStep] = useState<"idle" | "confirm" | "sending" | "sent">("idle");
+  const [sosError, setSosError] = useState<string | null>(null);
   const { status: locationStatus, errorMessage: locationError } = useLiveLocationSharing(tripId);
 
   async function refetch() {
@@ -51,6 +53,18 @@ export default function DriverTripPage() {
     return () => void supabase.removeChannel(channel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, tripId]);
+
+  async function handleConfirmSos() {
+    setSosStep("sending");
+    setSosError(null);
+    try {
+      await tripQueries.triggerSos(supabase, tripId);
+      setSosStep("sent");
+    } catch (err) {
+      setSosError(err instanceof Error ? err.message : "Failed to send SOS alert");
+      setSosStep("confirm");
+    }
+  }
 
   async function handleEndTrip() {
     setIsEnding(true);
@@ -75,6 +89,35 @@ export default function DriverTripPage() {
       <p className="text-neutral-600">
         {boardedCount} of {attendance.length} students boarded
       </p>
+
+      {sosStep === "sent" ? (
+        <div className="flex flex-col gap-2">
+          <Banner tone="critical" title="Emergency alert sent">
+            Your school and the guardians of students on this trip have been notified.
+          </Banner>
+          <Button variant="ghost" className="self-start" onClick={() => setSosStep("idle")}>
+            Send another alert
+          </Button>
+        </div>
+      ) : sosStep === "confirm" || sosStep === "sending" ? (
+        <Banner tone="critical" title="Send an emergency alert?">
+          This immediately notifies your school&apos;s admins and every guardian on this trip. Only use this for a
+          real emergency.
+          <div className="mt-3 flex gap-2">
+            <Button variant="sos" onClick={handleConfirmSos} disabled={sosStep === "sending"}>
+              {sosStep === "sending" ? "Sending..." : "Confirm SOS"}
+            </Button>
+            <Button variant="ghost" onClick={() => setSosStep("idle")} disabled={sosStep === "sending"}>
+              Cancel
+            </Button>
+          </div>
+        </Banner>
+      ) : (
+        <Button variant="sos" size="lg" onClick={() => setSosStep("confirm")}>
+          SOS — Emergency alert
+        </Button>
+      )}
+      {sosError ? <p className="text-sm text-critical-600">{sosError}</p> : null}
 
       <StatusPill
         label={LOCATION_STATUS_LABEL[locationStatus] ?? locationStatus}

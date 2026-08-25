@@ -12,6 +12,12 @@ export async function endTrip(supabase: SabiDriveSupabaseClient, tripId: string)
   if (error) throw error;
 }
 
+/** Driver-triggered emergency alert -- fans out to the school's admins and the trip's guardians. */
+export async function triggerSos(supabase: SabiDriveSupabaseClient, tripId: string) {
+  const { error } = await supabase.rpc("trigger_sos", { p_trip_id: tripId });
+  if (error) throw error;
+}
+
 /**
  * Admin-only last resort when every phone on the bus is unreachable: sets
  * the bus's approximate position from a phone call or other out-of-band
