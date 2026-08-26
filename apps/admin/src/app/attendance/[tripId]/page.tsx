@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Banner, Button, Card, StatusPill, statusToneMap, AddressSearch } from "@sabidrive/ui";
 import type { MapPoint } from "@sabidrive/ui";
-import { tripQueries, useStaleness, useSupabaseClient, useTripLocation } from "@sabidrive/supabase";
+import { tripQueries, useStaleness, useSupabaseClient, useTripLocation, useTripMessages } from "@sabidrive/supabase";
 
 const TripMap = dynamic(() => import("@sabidrive/ui").then((m) => m.TripMap), { ssr: false });
 const ClickToAddMap = dynamic(() => import("@sabidrive/ui").then((m) => m.ClickToAddMap), { ssr: false });
@@ -26,7 +26,7 @@ interface TripInfo {
 
 export default function AttendancePage() {
   const { tripId } = useParams<{ tripId: string }>();
-  const { isLoading } = useRequireAdmin();
+  const { profile, isLoading } = useRequireAdmin();
   const supabase = useSupabaseClient();
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [trip, setTrip] = useState<TripInfo | null>(null);
@@ -36,9 +36,11 @@ export default function AttendancePage() {
   const [overrideError, setOverrideError] = useState<string | null>(null);
   const [overrideStatus, setOverrideStatus] = useState<string | null>(null);
   const [isSavingOverride, setIsSavingOverride] = useState(false);
+  const [messageDraft, setMessageDraft] = useState("");
 
   const { current } = useTripLocation(tripId);
   const { isStale, secondsAgo } = useStaleness(current?.recordedAt ?? null);
+  const { messages, sendMessage } = useTripMessages(tripId);
 
   async function refetch() {
     const data = await tripQueries.getAttendanceForTrip(supabase, tripId);
@@ -70,6 +72,14 @@ export default function AttendancePage() {
   const boarded = attendance.filter((a) => a.status === "boarded").length;
   const missed = attendance.filter((a) => a.status === "missed").length;
   const pending = attendance.filter((a) => a.status === "pending").length;
+
+  async function handleSendMessage(e: FormEvent) {
+    e.preventDefault();
+    const body = messageDraft.trim();
+    if (!body) return;
+    setMessageDraft("");
+    await sendMessage(body);
+  }
 
   async function handleSaveOverride() {
     if (!overridePoint) return;
@@ -168,6 +178,35 @@ export default function AttendancePage() {
           </div>
         ))}
         {attendance.length === 0 ? <p className="text-neutral-500">No expected students for this trip.</p> : null}
+      </Card>
+
+      <Card className="mt-4 flex flex-col gap-2">
+        <h2 className="font-medium">Messages</h2>
+        <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`rounded-lg px-3 py-2 text-sm ${
+                m.senderId === profile?.id ? "self-end bg-brand-50 text-brand-900" : "self-start bg-neutral-100 text-neutral-800"
+              }`}
+            >
+              <p className="text-xs font-medium text-neutral-500">{m.senderName}</p>
+              <p>{m.body}</p>
+            </div>
+          ))}
+          {messages.length === 0 ? <p className="text-sm text-neutral-500">No messages yet.</p> : null}
+        </div>
+        <form onSubmit={handleSendMessage} className="flex gap-2">
+          <input
+            value={messageDraft}
+            onChange={(e) => setMessageDraft(e.target.value)}
+            placeholder="Message the driver and guardians on this trip…"
+            className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          <Button type="submit" disabled={!messageDraft.trim()}>
+            Send
+          </Button>
+        </form>
       </Card>
     </AdminShell>
   );

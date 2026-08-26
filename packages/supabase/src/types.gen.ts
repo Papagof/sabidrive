@@ -838,6 +838,48 @@ export type Database = {
           },
         ]
       }
+      trip_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_name: string
+          trip_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          sender_name?: string
+          trip_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_name?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_messages_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_locations: {
         Row: {
           heading_deg: number | null

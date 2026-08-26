@@ -1,12 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
 import type { MapStop } from "@sabidrive/ui";
-import { studentQueries, tripQueries, userQueries, useNotifications, useStaleness, useSupabaseClient, useTripLocation } from "@sabidrive/supabase";
+import {
+  studentQueries,
+  tripQueries,
+  userQueries,
+  useNotifications,
+  useStaleness,
+  useSupabaseClient,
+  useTripLocation,
+  useTripMessages
+} from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 const TripMap = dynamic(() => import("@sabidrive/ui").then((m) => m.TripMap), { ssr: false });
@@ -48,11 +57,13 @@ export default function StudentTrackingPage() {
   const [pendingCodeType, setPendingCodeType] = useState<"board" | "alight" | null>(null);
   const [codeStatus, setCodeStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [codeCooldown, setCodeCooldown] = useState<"board" | "alight" | null>(null);
+  const [messageDraft, setMessageDraft] = useState("");
 
   const { current } = useTripLocation(tripId);
   const { isStale, secondsAgo } = useStaleness(current?.recordedAt ?? null);
   const { notifications } = useNotifications(profile?.id ?? null);
   const studentNotifications = notifications.filter((n) => n.related_student_id === studentId);
+  const { messages, sendMessage } = useTripMessages(tripId);
 
   useEffect(() => {
     supabase
@@ -131,6 +142,14 @@ export default function StudentTrackingPage() {
     }
   }
 
+  async function handleSendMessage(e: FormEvent) {
+    e.preventDefault();
+    const body = messageDraft.trim();
+    if (!body) return;
+    setMessageDraft("");
+    await sendMessage(body);
+  }
+
   if (isAuthLoading || !student) return null;
 
   const driver = driverContact?.buses?.driver;
@@ -181,6 +200,37 @@ export default function StudentTrackingPage() {
               <Button variant="secondary">Call driver</Button>
             </a>
           ) : null}
+        </Card>
+      ) : null}
+
+      {tripId ? (
+        <Card className="flex flex-col gap-2">
+          <h2 className="font-medium">Messages</h2>
+          <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={`rounded-lg px-3 py-2 text-sm ${
+                  m.senderId === profile?.id ? "self-end bg-brand-50 text-brand-900" : "self-start bg-neutral-100 text-neutral-800"
+                }`}
+              >
+                <p className="text-xs font-medium text-neutral-500">{m.senderName}</p>
+                <p>{m.body}</p>
+              </div>
+            ))}
+            {messages.length === 0 ? <p className="text-sm text-neutral-500">No messages yet.</p> : null}
+          </div>
+          <form onSubmit={handleSendMessage} className="flex gap-2">
+            <input
+              value={messageDraft}
+              onChange={(e) => setMessageDraft(e.target.value)}
+              placeholder="Message the driver…"
+              className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <Button type="submit" disabled={!messageDraft.trim()}>
+              Send
+            </Button>
+          </form>
         </Card>
       ) : null}
 
