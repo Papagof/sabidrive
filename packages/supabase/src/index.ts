@@ -6,6 +6,7 @@ export * from "./hooks/useTripLocation";
 export * from "./hooks/useNotifications";
 export * from "./hooks/useFleetTrips";
 export * from "./hooks/useStaleness";
+export * from "./reports";
 export * as tripQueries from "./queries/trips";
 export * as studentQueries from "./queries/students";
 export * as adminQueries from "./queries/admin";

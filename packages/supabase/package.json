@@ -11,7 +11,8 @@
   },
   "sideEffects": false,
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "react": "^18.3.0"
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@sabidrive/config": "workspace:*",
     "@types/react": "^18.3.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.9"
   }
 }

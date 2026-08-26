@@ -346,3 +346,63 @@ export async function removeGuardianFromSchool(supabase: SabiDriveSupabaseClient
   const { error } = await supabase.from("guardian_student_links").delete().eq("guardian_id", guardianId);
   if (error) throw error;
 }
+
+// === Reports page range-scoped fetchers ===
+// Raw rows only -- see reports.ts (packages/supabase/src/reports.ts) for the
+// pure aggregation these feed. All admin-RLS-scoped like everything else in
+// this file; no new migration/policy needed since trips/attendance_expectations/
+// alerts/sms_outbox were already fully readable for an admin's own school.
+
+export async function getTripsInRange(supabase: SabiDriveSupabaseClient, schoolId: string, sinceISODate: string) {
+  const { data, error } = await supabase
+    .from("trips")
+    .select("status, route_id, started_at, ended_at, routes(name)")
+    .eq("school_id", schoolId)
+    .gte("trip_date", sinceISODate);
+  if (error) throw error;
+  return (data as unknown as { status: string; route_id: string; started_at: string | null; ended_at: string | null; routes: { name: string } | null }[]).map(
+    (t) => ({ status: t.status, route_id: t.route_id, route_name: t.routes?.name ?? null, started_at: t.started_at, ended_at: t.ended_at })
+  );
+}
+
+export async function getAttendanceInRange(supabase: SabiDriveSupabaseClient, schoolId: string, sinceISODate: string) {
+  const { data, error } = await supabase
+    .from("attendance_expectations")
+    .select("status, trips!inner(school_id, trip_date)")
+    .eq("trips.school_id", schoolId)
+    .gte("trips.trip_date", sinceISODate);
+  if (error) throw error;
+  return data as unknown as { status: string }[];
+}
+
+export async function getAlertsInRange(supabase: SabiDriveSupabaseClient, schoolId: string, sinceISODate: string) {
+  const { data, error } = await supabase
+    .from("alerts")
+    .select("type, severity, resolved_at, trips(driver_id, driver:driver_id(full_name))")
+    .eq("school_id", schoolId)
+    .gte("created_at", sinceISODate);
+  if (error) throw error;
+  return (
+    data as unknown as {
+      type: string;
+      severity: string;
+      resolved_at: string | null;
+      trips: { driver_id: string; driver: { full_name: string } | null } | null;
+    }[]
+  ).map((a) => ({
+    type: a.type,
+    severity: a.severity,
+    resolved_at: a.resolved_at,
+    driver_id: a.trips?.driver_id ?? null,
+    driver_name: a.trips?.driver?.full_name ?? null
+  }));
+}
+
+export async function getSmsCountInRange(supabase: SabiDriveSupabaseClient, sinceISODate: string) {
+  const { count, error } = await supabase
+    .from("sms_outbox")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", sinceISODate);
+  if (error) throw error;
+  return count ?? 0;
+}

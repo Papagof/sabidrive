@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/students", label: "Students" },
   { href: "/staff", label: "Staff & guardians" },
   { href: "/alerts", label: "Alerts" },
+  { href: "/reports", label: "Reports" },
   { href: "/announcements", label: "Announcements" },
   { href: "/sms-log", label: "SMS log" },
   { href: "/settings", label: "Settings" }

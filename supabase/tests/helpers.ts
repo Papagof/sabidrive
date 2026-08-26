@@ -13,6 +13,8 @@
  */
 import { config } from "dotenv";
 import { resolve } from "node:path";
+import { createClient } from "@supabase/supabase-js";
+import type { SabiDriveSupabaseClient } from "@sabidrive/supabase/client";
 
 config({ path: resolve(__dirname, "../../.env.local") });
 
@@ -99,6 +101,19 @@ export async function signIn(email: string, password: string): Promise<string> {
   return body.access_token as string;
 }
 
+/**
+ * A real signed-in @sabidrive/supabase client (not the raw-fetch helpers
+ * above) -- for tests that need to call the actual typed query functions in
+ * packages/supabase/src/queries/*.ts directly, so a bug in the real query
+ * string/embed isn't masked by a hand-written REST call re-implementing it.
+ */
+export async function signInClient(email: string, password: string): Promise<SabiDriveSupabaseClient> {
+  const client = createClient(SUPABASE_URL!, ANON_KEY!, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return client as SabiDriveSupabaseClient;
+}
+
 export async function createSchool(name: string): Promise<string> {
   const r = await svc("/rest/v1/schools", {
     method: "POST",
@@ -163,4 +178,62 @@ export async function linkGuardian(guardianId: string, studentId: string): Promi
     body: JSON.stringify({ guardian_id: guardianId, student_id: studentId })
   });
   if (!r.ok) throw new Error(`linkGuardian(${guardianId}, ${studentId}) failed: ${JSON.stringify(r.body)}`);
+}
+
+/** Direct service-role insert -- for seeding report-fetcher test fixtures only; real trips are normally only ever created via start_trip(). */
+export async function createTripDirect(input: {
+  schoolId: string;
+  busId: string;
+  routeId: string;
+  driverId: string;
+  status: "completed" | "cancelled" | "in_progress";
+  tripDate: string;
+  startedAt?: string;
+  endedAt?: string;
+}): Promise<string> {
+  const r = await svc("/rest/v1/trips", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      school_id: input.schoolId,
+      bus_id: input.busId,
+      route_id: input.routeId,
+      driver_id: input.driverId,
+      status: input.status,
+      direction: "pickup",
+      trip_date: input.tripDate,
+      started_at: input.startedAt ?? null,
+      ended_at: input.endedAt ?? null
+    })
+  });
+  if (!r.ok) throw new Error(`createTripDirect failed: ${JSON.stringify(r.body)}`);
+  return r.body[0].id as string;
+}
+
+export async function createAttendanceDirect(tripId: string, studentId: string, status: string): Promise<void> {
+  const r = await svc("/rest/v1/attendance_expectations", {
+    method: "POST",
+    body: JSON.stringify({ trip_id: tripId, student_id: studentId, status })
+  });
+  if (!r.ok) throw new Error(`createAttendanceDirect failed: ${JSON.stringify(r.body)}`);
+}
+
+export async function createAlertDirect(input: {
+  schoolId: string;
+  tripId: string;
+  type: string;
+  severity: "info" | "warning" | "critical";
+  resolvedAt?: string;
+}): Promise<void> {
+  const r = await svc("/rest/v1/alerts", {
+    method: "POST",
+    body: JSON.stringify({
+      school_id: input.schoolId,
+      trip_id: input.tripId,
+      type: input.type,
+      severity: input.severity,
+      resolved_at: input.resolvedAt ?? null
+    })
+  });
+  if (!r.ok) throw new Error(`createAlertDirect failed: ${JSON.stringify(r.body)}`);
 }
