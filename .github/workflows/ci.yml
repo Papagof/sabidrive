@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm build
+        env:
+          # Placeholder values so `next build` can complete -- these apps read
+          # NEXT_PUBLIC_* vars at build time but CI never talks to a real
+          # Supabase project (that would need production secrets in CI, which
+          # this repo deliberately doesn't do -- see "Automated tests" in
+          # CLAUDE.md).
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: placeholder-vapid-key
+
+      # Tier 1 only: pure-function unit tests (packages/gps-sim), no network.
+      # The DB/RLS/RPC integration suite (`pnpm test:db`) needs real Supabase
+      # credentials and hits the real production project -- it stays
+      # manual-only and is never run here. See "Automated tests" in CLAUDE.md.
+      - run: pnpm test

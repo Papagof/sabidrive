@@ -11,6 +11,8 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:db": "pnpm --filter @sabidrive/db-tests run test:db",
     "sim:dev": "pnpm --filter @sabidrive/gps-sim run sim:dev",
     "db:seed": "tsx scripts/seed.ts"
   },
