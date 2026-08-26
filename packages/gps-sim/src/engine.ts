@@ -43,3 +43,4 @@ export function computeEtaMinutes(
 }
 
 export * from "./route-utils";
+export * from "./location-queue";

@@ -16,6 +16,11 @@ const LOCATION_STATUS_LABEL: Record<string, string> = {
   error: "Couldn't share live location"
 };
 
+function locationStatusLabel(status: string, queuedCount: number): string {
+  if (status === "queued") return `Offline — ${queuedCount} location${queuedCount === 1 ? "" : "s"} queued`;
+  return LOCATION_STATUS_LABEL[status] ?? status;
+}
+
 interface AttendanceRow {
   id: string;
   student_id: string;
@@ -34,7 +39,7 @@ export default function DriverTripPage() {
   const [sosStep, setSosStep] = useState<"idle" | "confirm" | "sending" | "sent">("idle");
   const [sosError, setSosError] = useState<string | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
-  const { status: locationStatus, errorMessage: locationError } = useLiveLocationSharing(tripId);
+  const { status: locationStatus, errorMessage: locationError, queuedCount } = useLiveLocationSharing(tripId);
   const { messages, sendMessage } = useTripMessages(tripId);
 
   async function refetch() {
@@ -130,12 +135,22 @@ export default function DriverTripPage() {
       {sosError ? <p className="text-sm text-critical-600">{sosError}</p> : null}
 
       <StatusPill
-        label={LOCATION_STATUS_LABEL[locationStatus] ?? locationStatus}
-        tone={locationStatus === "sharing" ? "positive" : locationStatus === "denied" || locationStatus === "error" ? "caution" : "neutral"}
+        label={locationStatusLabel(locationStatus, queuedCount)}
+        tone={
+          locationStatus === "sharing"
+            ? "positive"
+            : locationStatus === "denied" || locationStatus === "error" || locationStatus === "queued"
+              ? "caution"
+              : "neutral"
+        }
       />
       {locationStatus === "denied" ? (
         <Banner tone="caution" title="Turn on location access to share your live position">
           Parents and the school can still see the trip and attendance without it &mdash; you can keep scanning students and end the trip normally.
+        </Banner>
+      ) : locationStatus === "queued" ? (
+        <Banner tone="caution" title="You're offline">
+          Queued positions will send automatically once you&apos;re back in signal &mdash; scanning students and ending the trip still work normally.
         </Banner>
       ) : locationStatus === "error" && locationError ? (
         <Banner tone="caution" title="Live location isn't sharing right now">

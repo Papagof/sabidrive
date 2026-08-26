@@ -25,7 +25,7 @@ const RPCS: { name: string; signature: string }[] = [
   { name: "trigger_sos", signature: "public.trigger_sos(uuid)" },
   {
     name: "record_trip_location",
-    signature: "public.record_trip_location(uuid, double precision, double precision, numeric, numeric, numeric, jsonb)"
+    signature: "public.record_trip_location(uuid, double precision, double precision, numeric, numeric, numeric, jsonb, timestamptz)"
   },
   { name: "create_announcement", signature: "public.create_announcement(text, text)" }
 ];

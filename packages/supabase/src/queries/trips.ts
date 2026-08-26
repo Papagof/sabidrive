@@ -102,6 +102,8 @@ export interface RecordTripLocationInput {
   speedKmh?: number | null;
   deviationM?: number | null;
   stopEtas: StopEtaInput[];
+  /** ISO timestamp of when the fix was actually captured -- set when replaying a queued offline fix, so the trip's position history reflects the real moment rather than replay time. Omitted for a live fix, where the RPC defaults it to now(). */
+  recordedAt?: string;
 }
 
 /**
@@ -120,7 +122,8 @@ export async function recordTripLocation(supabase: SabiDriveSupabaseClient, trip
     p_heading_deg: input.headingDeg ?? undefined,
     p_speed_kmh: input.speedKmh ?? undefined,
     p_deviation_m: input.deviationM ?? undefined,
-    p_stop_etas: input.stopEtas as unknown as Json
+    p_stop_etas: input.stopEtas as unknown as Json,
+    p_recorded_at: input.recordedAt ?? undefined
   });
   if (error) throw error;
 }

@@ -1097,6 +1097,7 @@ export type Database = {
           p_heading_deg?: number
           p_lat: number
           p_lng: number
+          p_recorded_at?: string
           p_speed_kmh?: number
           p_stop_etas?: Json
           p_trip_id: string
