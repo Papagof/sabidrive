@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@sabidrive/ui";
 import { useSupabaseClient } from "@sabidrive/supabase";
 import { subscribeToPush } from "@/lib/push";
+import { subscribeToNativePush } from "@/lib/nativePush";
 
 export function NotificationOptIn({ userId }: { userId: string }) {
   const supabase = useSupabaseClient();
@@ -12,7 +14,9 @@ export function NotificationOptIn({ userId }: { userId: string }) {
 
   async function handleClick() {
     setIsSubscribing(true);
-    const result = await subscribeToPush(supabase, userId);
+    const result = Capacitor.isNativePlatform()
+      ? await subscribeToNativePush(supabase, userId)
+      : await subscribeToPush(supabase, userId);
     setStatus(
       result === "subscribed"
         ? "Notifications enabled."

@@ -35,4 +35,6 @@
     <!-- Driver QR check-in scan (@yudiel/react-qr-scanner via getUserMedia) -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Native push notifications (FCM), required for PushNotifications.requestPermissions() to actually prompt on Android 13+ (API 33), same as CAMERA above. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
