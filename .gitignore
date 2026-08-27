@@ -19,3 +19,4 @@ coverage/
 **/public/worker-*.js
 **/public/fallback-*.js
 .vercel
+dist-hostinger

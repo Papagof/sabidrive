@@ -47,15 +47,16 @@ Signing, losing the keystore means you can never publish an update to this app a
 ## 4. Deploy the family app so `/privacy` is live
 
 Play Console requires a **live URL** for the privacy policy, not a document. `apps/family/src/app/privacy/page.tsx`
-is already built and will be live at `https://family-six-theta.vercel.app/privacy` on the next deploy to `main`
-(also linked from the in-app Account page, since some reviewers check for an in-app link too).
+is already built and will be live at `https://family.sabidrive.com/privacy` once the family app is deployed (see
+"Deployment (Hostinger)" in CLAUDE.md — also linked from the in-app Account page, since some reviewers check for
+an in-app link too).
 
 ## 5. Create the Play Console listing
 
 - App name: SabiDrive
 - Package name: `com.sabidrive.family`
 - Category: likely Education or Maps & Navigation
-- Privacy policy URL: `https://family-six-theta.vercel.app/privacy`
+- Privacy policy URL: `https://family.sabidrive.com/privacy`
 
 ## 6. Content rating questionnaire
 
