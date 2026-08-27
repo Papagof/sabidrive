@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/start",
+      "has": [{ "type": "host", "value": "sabidrive.com" }]
+    }
+  ]
+}

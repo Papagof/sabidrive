@@ -63,7 +63,11 @@ Swap in `apps/admin/.vercel/project.json` to redeploy admin instead.
 
 **Manual step required**: add `https://family-six-theta.vercel.app/set-password` to Supabase's redirect-URL allow-list (Dashboard → Authentication → URL Configuration → Redirect URLs) — same requirement as the localhost one, needed before an invite sent from the deployed admin app will actually redirect correctly.
 
-Not yet done: custom domain (both apps are on their `*.vercel.app` URLs).
+**Custom domain (`sabidrive.com`, registered at Hostinger — manual step required)**: the domain is registered at Hostinger but the app is not hosted there — Hostinger tried to build/run this Next.js monorepo directly and failed, which is expected: it needs a Node.js server for SSR/API routes and a pnpm-workspace-aware build, neither of which Hostinger's own hosting was set up for. The fix is DNS-only, pointing the domain at the existing Vercel deployments, split as `sabidrive.com` (bare) → `/start` only, `family.sabidrive.com` → the family app, `admin.sabidrive.com` → the admin app.
+- `apps/family/vercel.json` — a host-based rewrite (`has: [{ type: "host", value: "sabidrive.com" }]`) makes the bare domain's `/` serve `/start`'s content without affecting `family.sabidrive.com`'s own root (which keeps the existing session-based redirect to `/login` or a role home). This can't be verified locally — `vercel.json` rewrites are Vercel's edge routing layer, not something `next dev` processes — so it's confirmed by a build-succeeds check only; the real proof is the next deploy once the domain is attached.
+- Two manual steps, neither of which an AI session can do (no Vercel API token in this environment, and Hostinger DNS access requires the account owner):
+  1. **Vercel dashboard** (Project → Settings → Domains): add `sabidrive.com` + `family.sabidrive.com` to the `family` project, `admin.sabidrive.com` to the `admin` project.
+  2. **Hostinger DNS**: an `A` record for the bare `sabidrive.com` → `76.76.21.21` (Vercel's anycast IP — apex domains can't use CNAME per DNS spec), and `CNAME` records for `family` → `cname.vercel-dns.com` and `admin` → `cname.vercel-dns.com`. Vercel's own domain-add flow shows the exact current values to use — confirm against that rather than trusting this file if Vercel's target ever changes.
 
 ## Native packaging (`apps/family-native`)
 
