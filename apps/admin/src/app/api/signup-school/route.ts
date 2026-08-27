@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServiceRoleSupabaseClient } from "@sabidrive/supabase/server";
+import { checkRateLimit, createServiceRoleSupabaseClient, getClientIp } from "@sabidrive/supabase/server";
 
 // Node runtime (not edge) — needs the service-role key and the Admin API.
 export const runtime = "nodejs";
@@ -33,6 +33,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const supabase = createServiceRoleSupabaseClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  const allowed = await checkRateLimit(supabase, `signup-school:${getClientIp(req)}`, 5, 3600);
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
+  }
+
   const { school_name, address, geofence_lat, geofence_lng, full_name, email, password } = body;
   if (!school_name?.trim() || !full_name?.trim() || !email || !password) {
     return NextResponse.json(
@@ -57,8 +64,6 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-
-  const supabase = createServiceRoleSupabaseClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   const { data: school, error: schoolError } = await supabase
     .from("schools")

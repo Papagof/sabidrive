@@ -649,6 +649,24 @@ export type Database = {
           },
         ]
       }
+      rate_limit_hits: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          id?: never
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: never
+        }
+        Relationships: []
+      }
       routes: {
         Row: {
           created_at: string
@@ -1108,6 +1126,10 @@ export type Database = {
       check_in: {
         Args: { p_event_type?: string; p_method?: string; p_qr_token: string; p_trip_id: string }
         Returns: undefined
+      }
+      check_rate_limit: {
+        Args: { p_bucket: string; p_max_attempts: number; p_window_seconds: number }
+        Returns: boolean
       }
       create_announcement: {
         Args: { p_body: string; p_title: string }

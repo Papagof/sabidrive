@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAnonServerSupabaseClient, createServiceRoleSupabaseClient } from "@sabidrive/supabase/server";
+import { checkRateLimit, createAnonServerSupabaseClient, createServiceRoleSupabaseClient, getClientIp } from "@sabidrive/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -37,6 +37,19 @@ export async function POST(req: Request) {
   }
 
   const serviceClient = createServiceRoleSupabaseClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  // Two buckets: IP stops one caller from spraying many phone numbers,
+  // phone stops a distributed attempt against one target number. Both must
+  // pass -- doesn't reveal which one tripped, same generic-error shape as
+  // the rest of this route.
+  const [ipAllowed, phoneAllowed] = await Promise.all([
+    checkRateLimit(serviceClient, `login-with-phone:ip:${getClientIp(req)}`, 10, 900),
+    checkRateLimit(serviceClient, `login-with-phone:phone:${phone}`, 5, 900)
+  ]);
+  if (!ipAllowed || !phoneAllowed) {
+    return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
+  }
+
   const { data: profile } = await serviceClient
     .from("profiles")
     .select("email")

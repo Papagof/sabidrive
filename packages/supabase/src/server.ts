@@ -46,3 +46,42 @@ export async function getUserFromAccessToken(
   if (error || !data.user) return null;
   return { id: data.user.id };
 }
+
+/**
+ * First IP in `x-forwarded-for` (Vercel sets this on every request) -- the
+ * closest thing to a real client IP available in a Route Handler.
+ */
+export function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return "unknown";
+}
+
+/**
+ * For Route Handlers reachable with no bearer token at all (signup-school,
+ * login-with-phone) -- see 0037_rate_limiting.sql for the actual
+ * fixed-window-log logic. Fails OPEN (returns true/allowed) if the RPC call
+ * itself errors: a rate limiter is defense-in-depth, not a hard
+ * requirement, and failing closed would turn a transient DB hiccup into a
+ * full signup/login outage.
+ */
+export async function checkRateLimit(
+  supabase: SabiDriveSupabaseClient,
+  bucket: string,
+  maxAttempts: number,
+  windowSeconds: number
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("check_rate_limit", {
+    p_bucket: bucket,
+    p_max_attempts: maxAttempts,
+    p_window_seconds: windowSeconds
+  });
+  if (error) {
+    console.error("rate limit check failed, failing open", error);
+    return true;
+  }
+  return data === true;
+}
