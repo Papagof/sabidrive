@@ -158,6 +158,10 @@ export default function AccountPage() {
           </Banner>
         ) : null}
       </Card>
+
+      <Link href="/privacy" className="text-center text-sm text-neutral-500">
+        Privacy Policy
+      </Link>
     </main>
   );
 }
