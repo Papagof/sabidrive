@@ -11,7 +11,7 @@ const SESSION_TIMEOUT_MS = 6000;
 // invite (apps/admin/src/app/api/invite-user) and a "forgot password" reset
 // (both apps' login pages) -- supabase-js's detectSessionInUrl handles both
 // the same way, so one page covers both rather than duplicating it.
-const ADMIN_APP_URL = "https://admin.sabidrive.com";
+const ADMIN_APP_URL = "https://admin-nine-tau-50.vercel.app";
 
 export default function SetPasswordPage() {
   const supabase = useSupabaseClient();

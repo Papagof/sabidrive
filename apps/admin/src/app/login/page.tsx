@@ -7,11 +7,13 @@ import { AnimatedBusesBackdrop, Banner, Button, Card, PasswordInput } from "@sab
 import { useSession, useSupabaseClient } from "@sabidrive/supabase";
 
 // Admin has no set-password page of its own -- password-reset links land on
-// the family app's (same page the invite-by-email flow already uses).
-// Hardcoded rather than an env var, same tradeoff already accepted for the
-// /start page's cross-app link: correct in production, just redirects to
-// the deployed family app (not localhost) if you're testing this locally.
-const FAMILY_APP_URL = "https://family.sabidrive.com";
+// the family app's (same page the invite-by-email flow already uses, and
+// already on Supabase's redirect allow-list, so this needs no new manual
+// dashboard step). Hardcoded rather than an env var, same tradeoff already
+// accepted for the /start page's cross-app link: correct in production,
+// just redirects to the deployed family app (not localhost) if you're
+// testing this locally.
+const FAMILY_APP_URL = "https://family-six-theta.vercel.app";
 
 export default function LoginPage() {
   const supabase = useSupabaseClient();

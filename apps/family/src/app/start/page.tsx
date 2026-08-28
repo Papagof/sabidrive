@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AnimatedBusesBackdrop, Card, Logo } from "@sabidrive/ui";
 
-const ADMIN_APP_URL = "https://admin.sabidrive.com";
+const ADMIN_APP_URL = "https://admin-nine-tau-50.vercel.app";
 
 export default function ChoosePage() {
   return (
