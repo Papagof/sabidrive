@@ -42,7 +42,7 @@ Running the app for real requires **three processes**: `pnpm --filter family dev
 Two separate Vercel projects under the `godfrey5` team, one per app — matches the two-app architecture, not one project with two output dirs:
 
 - **`family`** → https://family-six-theta.vercel.app
-- **`admin`** → https://admin-nine-tau-50.vercel.app
+- **`admin`** → https://sabidrive-admin.vercel.app (re-added after the original `admin-nine-tau-50.vercel.app` domain was deleted mid-session; the project itself was never deleted)
 
 Since these are two separate deployments with no shared entry point, `apps/family/src/app/start/page.tsx` (**https://family-six-theta.vercel.app/start**) is a single unified landing page linking out to both: "Parent or Driver" stays in the family app (`/login`), "School Admin" is a plain external link to the admin app's `/login`. It's additive — the existing root-page auto-redirect logic in both apps (straight to `/login` or a role home, depending on session) is untouched, so this doesn't change any existing sign-in flow, it's just a new front door for someone who doesn't already have either URL bookmarked.
 
