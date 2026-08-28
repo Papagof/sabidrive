@@ -13,7 +13,7 @@ import { useSession, useSupabaseClient } from "@sabidrive/supabase";
 // accepted for the /start page's cross-app link: correct in production,
 // just redirects to the deployed family app (not localhost) if you're
 // testing this locally.
-const FAMILY_APP_URL = "https://family-six-theta.vercel.app";
+const FAMILY_APP_URL = "https://sabidrive-family.vercel.app";
 
 export default function LoginPage() {
   const supabase = useSupabaseClient();

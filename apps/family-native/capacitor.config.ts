@@ -11,7 +11,7 @@ const config: CapacitorConfig = {
   appName: "SabiDrive",
   webDir: "www",
   server: {
-    url: "https://family-six-theta.vercel.app",
+    url: "https://sabidrive-family.vercel.app",
     androidScheme: "https"
   }
 };
