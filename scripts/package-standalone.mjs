@@ -35,19 +35,6 @@
 // so Next's build-time file tracing doesn't catch them either). The fix:
 // whenever dereferencing a symlink that points into a pnpm virtual-store
 // package folder, also copy every sibling from that same folder alongside it.
-//
-// Last wrinkle, also found live (a Hostinger hPanel Node.js App install
-// step failing with a corepack pnpm-version-mismatch error): Next's
-// standalone tracing copies the *entire root monorepo `package.json`*
-// verbatim to the top of the standalone output, `packageManager` pin,
-// devDependencies, turbo scripts and all — none of which mean anything here
-// since every dependency is already vendored as real files, but hPanel's
-// Node.js App feature runs some install step against it regardless. A
-// `packageManager` pin that doesn't match whatever pnpm/corepack Hostinger
-// has installed makes that step fail outright. Both `package.json`s (the
-// copied root one and the app's own) get overwritten with a minimal,
-// dependency-free stub after copying, so any auto-install a host runs
-// against them is a harmless no-op.
 
 import {
   existsSync,
@@ -57,8 +44,7 @@ import {
   statSync,
   lstatSync,
   realpathSync,
-  copyFileSync,
-  writeFileSync
+  copyFileSync
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -133,12 +119,6 @@ if (existsSync(publicDir)) {
   copyDereferenced(publicDir, path.join(nestedAppDir, "public"));
 }
 copyDereferenced(path.join(appDir, ".next", "static"), path.join(nestedAppDir, ".next", "static"));
-
-// Strip both package.json's down to a minimal stub — no packageManager pin,
-// no dependencies list, nothing for a host's auto-install step to trip on.
-const minimalPackageJson = (name) => JSON.stringify({ name, version: "0.1.0", private: true }, null, 2) + "\n";
-writeFileSync(path.join(outDir, "package.json"), minimalPackageJson("sabidrive"));
-writeFileSync(path.join(nestedAppDir, "package.json"), minimalPackageJson(`@sabidrive/${app}`));
 
 const startupFile = path.join("apps", app, "server.js");
 console.log(`Done: ${outDir}`);
