@@ -3,12 +3,5 @@
     "env": {
       "ENABLE_EXPERIMENTAL_COREPACK": "1"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/start",
-      "has": [{ "type": "host", "value": "sabidrive.com" }]
-    }
-  ]
+  }
 }
