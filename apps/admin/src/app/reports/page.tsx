@@ -6,6 +6,7 @@ import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Button, Card, StatusPill } from "@sabidrive/ui";
 import {
   adminQueries,
+  buildReportsCsv,
   summarizeAlerts,
   summarizeAttendance,
   summarizeTrips,
@@ -80,6 +81,25 @@ export default function ReportsPage() {
   const attendanceSummary = useMemo(() => summarizeAttendance(attendance), [attendance]);
   const alertsSummary = useMemo(() => summarizeAlerts(alerts), [alerts]);
 
+  function handleExportCsv() {
+    const today = new Date().toISOString().slice(0, 10);
+    const csv = buildReportsCsv({
+      rangeLabel: `${rangeDays}d`,
+      generatedAtISODate: today,
+      trips: tripsSummary,
+      attendance: attendanceSummary,
+      alerts: alertsSummary,
+      smsCount
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sabidrive-report-${rangeDays}d-${today}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (isLoading) return null;
 
   const maxRouteCount = tripsSummary.byRoute[0]?.count ?? 0;
@@ -101,6 +121,9 @@ export default function ReportsPage() {
               {opt.label}
             </Button>
           ))}
+          <Button variant="secondary" size="md" onClick={handleExportCsv} disabled={isFetching}>
+            Export CSV
+          </Button>
         </div>
       </div>
 

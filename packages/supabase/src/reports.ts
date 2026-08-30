@@ -125,3 +125,80 @@ export function summarizeAlerts(rows: AlertRow[]): AlertsSummary {
 
   return { total, byType, bySeverity, resolvedPct: total > 0 ? (resolved / total) * 100 : 0, topDrivers };
 }
+
+/** Quotes a field if it contains a comma, quote, or newline; doubles up any internal quotes. */
+function csvEscape(value: string | number): string {
+  const str = String(value);
+  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+  return str;
+}
+
+function csvRow(...cells: (string | number)[]): string {
+  return cells.map(csvEscape).join(",");
+}
+
+export interface ReportsCsvParams {
+  rangeLabel: string;
+  generatedAtISODate: string;
+  trips: TripsSummary;
+  attendance: AttendanceSummary;
+  alerts: AlertsSummary;
+  smsCount: number;
+}
+
+/** Builds the full Reports page export as CSV text -- same summary data already shown on screen, downloadable. */
+export function buildReportsCsv(params: ReportsCsvParams): string {
+  const { rangeLabel, generatedAtISODate, trips, attendance, alerts, smsCount } = params;
+  const lines: string[] = [];
+
+  lines.push(csvRow("SabiDrive Report", rangeLabel, generatedAtISODate));
+  lines.push("");
+
+  lines.push("Trips");
+  lines.push(csvRow("Total", trips.total));
+  lines.push(csvRow("Completed", trips.completed));
+  lines.push(csvRow("Cancelled", trips.cancelled));
+  lines.push(csvRow("Average duration (min)", trips.avgDurationMinutes != null ? Math.round(trips.avgDurationMinutes) : ""));
+  if (trips.byRoute.length > 0) {
+    lines.push("");
+    lines.push("By Route");
+    lines.push(csvRow("Route", "Count"));
+    for (const r of trips.byRoute) lines.push(csvRow(r.routeName ?? "Unnamed route", r.count));
+  }
+  lines.push("");
+
+  lines.push("Attendance");
+  lines.push(csvRow("Total", attendance.total));
+  lines.push(csvRow("Boarded", attendance.boarded));
+  lines.push(csvRow("Missed", attendance.missed));
+  lines.push(csvRow("Excused", attendance.excused));
+  lines.push("");
+
+  lines.push("Incidents");
+  lines.push(csvRow("Total", alerts.total));
+  lines.push(csvRow("Resolved %", Math.round(alerts.resolvedPct)));
+  if (alerts.bySeverity.length > 0) {
+    lines.push("");
+    lines.push("By Severity");
+    lines.push(csvRow("Severity", "Count"));
+    for (const s of alerts.bySeverity) lines.push(csvRow(s.severity, s.count));
+  }
+  if (alerts.byType.length > 0) {
+    lines.push("");
+    lines.push("By Type");
+    lines.push(csvRow("Type", "Count"));
+    for (const t of alerts.byType) lines.push(csvRow(t.type, t.count));
+  }
+  if (alerts.topDrivers.length > 0) {
+    lines.push("");
+    lines.push("Top Drivers");
+    lines.push(csvRow("Driver", "Count"));
+    for (const d of alerts.topDrivers) lines.push(csvRow(d.driverName ?? "Unknown", d.count));
+  }
+  lines.push("");
+
+  lines.push("SMS");
+  lines.push(csvRow("Simulated texts sent", smsCount));
+
+  return lines.join("\n");
+}
