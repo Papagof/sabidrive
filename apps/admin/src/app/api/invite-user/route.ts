@@ -77,5 +77,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
+  await serviceClient.from("audit_log").insert({
+    school_id: callerProfile.school_id,
+    actor_id: caller.id,
+    action: "user_invited",
+    target_id: data.user.id,
+    details: { email, role }
+  });
+
   return NextResponse.json({ userId: data.user.id });
 }

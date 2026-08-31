@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/reports", label: "Reports" },
   { href: "/announcements", label: "Announcements" },
   { href: "/sms-log", label: "SMS log" },
+  { href: "/activity", label: "Activity" },
   { href: "/settings", label: "Settings" }
 ];
 

@@ -94,5 +94,12 @@ export async function POST(req: Request) {
     }
   }
 
+  await serviceClient.from("audit_log").insert({
+    school_id: callerProfile.school_id,
+    actor_id: caller.id,
+    action: deactivate ? "driver_deactivated" : "driver_reactivated",
+    target_id: driverId
+  });
+
   return NextResponse.json({ ok: true });
 }

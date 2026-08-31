@@ -123,6 +123,20 @@ export async function getSchoolAlerts(supabase: SabiDriveSupabaseClient, schoolI
   return data;
 }
 
+// Sensitive admin actions (delete/retire a bus, delete a route, remove a
+// guardian) are logged by security-definer triggers (0041_audit_log.sql), not
+// by the client -- so this is a plain read, same shape as getSchoolAlerts.
+export async function getAuditLog(supabase: SabiDriveSupabaseClient, schoolId: string) {
+  const { data, error } = await supabase
+    .from("audit_log")
+    .select("*, actor:actor_id(full_name)")
+    .eq("school_id", schoolId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return data;
+}
+
 export async function getOpenAlerts(supabase: SabiDriveSupabaseClient, schoolId: string) {
   const { data, error } = await supabase
     .from("alerts")
