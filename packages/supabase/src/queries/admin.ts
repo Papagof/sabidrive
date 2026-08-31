@@ -217,6 +217,7 @@ export async function createBus(supabase: SabiDriveSupabaseClient, input: Create
 
 export interface UpdateBusInput {
   label?: string;
+  capacity?: number | null;
   driver_id?: string | null;
   attendant_id?: string | null;
   default_route_id?: string | null;

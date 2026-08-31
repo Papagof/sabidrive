@@ -16,6 +16,7 @@ interface BusRow {
   label: string;
   status: string;
   retired_at: string | null;
+  capacity: number | null;
   driver: { id: string; full_name: string; verification_status: VerificationStatus | null } | null;
   attendant: { id: string; full_name: string } | null;
   routes: { id: string; name: string } | null;
@@ -40,11 +41,13 @@ export default function BusesPage() {
   const [buses, setBuses] = useState<BusRow[]>([]);
   const [drivers, setDrivers] = useState<{ id: string; full_name: string }[]>([]);
   const [routes, setRoutes] = useState<OptionRow[]>([]);
+  const [studentCountByRoute, setStudentCountByRoute] = useState<Record<string, number>>({});
 
   const [label, setLabel] = useState("");
   const [driverId, setDriverId] = useState("");
   const [attendantId, setAttendantId] = useState("");
   const [routeId, setRouteId] = useState("");
+  const [capacity, setCapacity] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isInvitingDriver, setIsInvitingDriver] = useState(false);
@@ -53,6 +56,7 @@ export default function BusesPage() {
   const [editDriverId, setEditDriverId] = useState("");
   const [editAttendantId, setEditAttendantId] = useState("");
   const [editRouteId, setEditRouteId] = useState("");
+  const [editCapacity, setEditCapacity] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
@@ -70,6 +74,12 @@ export default function BusesPage() {
     setDrivers(driverRows ?? []);
     const { data: routeRows } = await supabase.from("routes").select("id, name").eq("school_id", profile.school_id);
     setRoutes(routeRows ?? []);
+    const { data: studentRows } = await supabase.from("students").select("default_route_id").eq("school_id", profile.school_id);
+    const counts: Record<string, number> = {};
+    for (const s of studentRows ?? []) {
+      if (s.default_route_id) counts[s.default_route_id] = (counts[s.default_route_id] ?? 0) + 1;
+    }
+    setStudentCountByRoute(counts);
   }
 
   useEffect(() => {
@@ -89,6 +99,7 @@ export default function BusesPage() {
     setEditDriverId(bus.driver?.id ?? UNASSIGNED);
     setEditAttendantId(bus.attendant?.id ?? UNASSIGNED);
     setEditRouteId(bus.routes?.id ?? UNASSIGNED);
+    setEditCapacity(bus.capacity != null ? String(bus.capacity) : "");
     setEditError(null);
   }
 
@@ -104,7 +115,8 @@ export default function BusesPage() {
       await adminQueries.updateBus(supabase, busId, {
         driver_id: editDriverId === UNASSIGNED ? null : editDriverId,
         attendant_id: editAttendantId === UNASSIGNED ? null : editAttendantId,
-        default_route_id: editRouteId === UNASSIGNED ? null : editRouteId
+        default_route_id: editRouteId === UNASSIGNED ? null : editRouteId,
+        capacity: editCapacity ? Number(editCapacity) : null
       });
       setEditingBusId(null);
       await refetch();
@@ -155,12 +167,14 @@ export default function BusesPage() {
         label,
         driver_id: driverId || null,
         attendant_id: attendantId || null,
-        default_route_id: routeId || null
+        default_route_id: routeId || null,
+        capacity: capacity ? Number(capacity) : undefined
       });
       setLabel("");
       setDriverId("");
       setAttendantId("");
       setRouteId("");
+      setCapacity("");
       await refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create bus");
@@ -238,6 +252,14 @@ export default function BusesPage() {
                 </option>
               ))}
             </select>
+            <input
+              type="number"
+              min="0"
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              placeholder="Capacity (optional)"
+              className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+            />
             {error ? <p className="text-sm text-critical-600">{error}</p> : null}
             <Button type="submit" disabled={isSaving}>
               {isSaving ? "Saving..." : "Create bus"}
@@ -286,6 +308,14 @@ export default function BusesPage() {
                     </option>
                   ))}
                 </select>
+                <input
+                  type="number"
+                  min="0"
+                  value={editCapacity}
+                  onChange={(e) => setEditCapacity(e.target.value)}
+                  placeholder="Capacity (optional)"
+                  className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+                />
                 {editError ? <p className="text-sm text-critical-600">{editError}</p> : null}
                 <div className="flex gap-2">
                   <Button onClick={() => handleSaveEdit(bus.id)} disabled={isSavingEdit} className="flex-1">
@@ -304,6 +334,7 @@ export default function BusesPage() {
                     <p className="text-sm text-neutral-500">
                       {bus.driver?.full_name ?? "No driver"}
                       {bus.attendant ? ` (backup: ${bus.attendant.full_name})` : ""} · {bus.routes?.name ?? "No route"}
+                      {bus.capacity != null ? ` · Capacity: ${bus.capacity}` : ""}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -317,6 +348,12 @@ export default function BusesPage() {
                     ) : null}
                     <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
                     {bus.retired_at ? <StatusPill label="Retired" tone="caution" /> : null}
+                    {bus.capacity != null && bus.routes?.id && (studentCountByRoute[bus.routes.id] ?? 0) > bus.capacity ? (
+                      <StatusPill
+                        label={`Over capacity: ${studentCountByRoute[bus.routes.id]}/${bus.capacity}`}
+                        tone="caution"
+                      />
+                    ) : null}
                     {!bus.retired_at ? (
                       <Button variant="secondary" onClick={() => startEdit(bus)}>
                         Edit
