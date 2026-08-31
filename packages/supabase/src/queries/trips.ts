@@ -49,6 +49,24 @@ export async function getDriverBus(supabase: SabiDriveSupabaseClient, driverId: 
   return data;
 }
 
+/**
+ * Raw stops + students for a driver's pre-trip route manifest (see
+ * routeManifest.ts's buildRouteManifest for the grouping) -- purely static
+ * assignment data (students.default_route_id/default_stop_id), independent
+ * of whether a trip has started. routes_select_driver/stops_select_driver/
+ * students_select_driver already scope by the driver's assigned bus's
+ * default_route_id with no trip dependency, so no new RLS is needed.
+ */
+export async function getRouteManifest(supabase: SabiDriveSupabaseClient, routeId: string) {
+  const [stopsRes, studentsRes] = await Promise.all([
+    supabase.from("stops").select("id, name, sequence_no, scheduled_time").eq("route_id", routeId).order("sequence_no"),
+    supabase.from("students").select("id, first_name, last_name, grade, default_stop_id").eq("default_route_id", routeId)
+  ]);
+  if (stopsRes.error) throw stopsRes.error;
+  if (studentsRes.error) throw studentsRes.error;
+  return { stops: stopsRes.data, students: studentsRes.data };
+}
+
 export async function getTripWithDriverContact(supabase: SabiDriveSupabaseClient, tripId: string) {
   const { data, error } = await supabase
     .from("trips")
