@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Banner, Button, Card } from "@sabidrive/ui";
-import { adminQueries, userQueries, useSupabaseClient } from "@sabidrive/supabase";
+import { adminQueries, buildStudentImportPlan, parseCsv, userQueries, useSupabaseClient, type StudentImportPlan } from "@sabidrive/supabase";
 import { InviteUserForm } from "@/components/InviteUserForm";
+
+const CSV_TEMPLATE = "first_name,last_name,grade,route,stop\nJane,Doe,5,Route A,Elm St\n";
 
 const INVITE_NEW_GUARDIAN = "__invite_new_guardian__";
 
@@ -74,6 +76,12 @@ export default function StudentsPage() {
   const [linkStatus, setLinkStatus] = useState<{ tone: "info" | "caution"; message: string } | null>(null);
   const [isLinkingByEmail, setIsLinkingByEmail] = useState(false);
 
+  const [importPlan, setImportPlan] = useState<StudentImportPlan | null>(null);
+  const [importFileName, setImportFileName] = useState<string | null>(null);
+  const [importFileError, setImportFileError] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
+
   async function refetch() {
     if (!profile?.school_id) return;
     const studentData = await adminQueries.getSchoolStudents(supabase, profile.school_id);
@@ -117,6 +125,53 @@ export default function StudentsPage() {
       setError(err instanceof Error ? err.message : "Failed to create student");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleCsvFileSelected(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImportSuccess(null);
+    setImportFileError(null);
+    setImportPlan(null);
+    try {
+      const text = await file.text();
+      const csvRows = parseCsv(text);
+      const plan = buildStudentImportPlan(csvRows, routes, stops);
+      setImportFileName(file.name);
+      setImportPlan(plan);
+    } catch (err) {
+      setImportFileError(err instanceof Error ? err.message : "Failed to read that file");
+    }
+  }
+
+  function handleDownloadTemplate() {
+    const blob = new Blob([CSV_TEMPLATE], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sabidrive-students-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleImportStudents() {
+    if (!importPlan || importPlan.valid.length === 0 || !profile?.school_id) return;
+    setIsImporting(true);
+    try {
+      await adminQueries.createStudentsBulk(
+        supabase,
+        importPlan.valid.map((row) => ({ ...row, school_id: profile.school_id! }))
+      );
+      setImportSuccess(`Imported ${importPlan.valid.length} student${importPlan.valid.length === 1 ? "" : "s"}.`);
+      setImportPlan(null);
+      setImportFileName(null);
+      await refetch();
+    } catch (err) {
+      setImportFileError(err instanceof Error ? err.message : "Failed to import students");
+    } finally {
+      setIsImporting(false);
     }
   }
 
@@ -217,6 +272,7 @@ export default function StudentsPage() {
         className="mb-4 min-h-control w-full max-w-md rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[320px_1fr]">
+        <div className="flex flex-col gap-4">
         <Card>
           <h2 className="mb-2 font-medium">New student</h2>
           <form onSubmit={handleCreate} className="flex flex-col gap-2">
@@ -274,6 +330,50 @@ export default function StudentsPage() {
             </Button>
           </form>
         </Card>
+
+        <Card className="flex flex-col gap-2">
+          <h2 className="font-medium">Import CSV</h2>
+          <p className="text-sm text-neutral-500">
+            Columns: <code>first_name</code>, <code>last_name</code>, and optionally <code>grade</code>, <code>route</code>,{" "}
+            <code>stop</code> (route/stop matched by name).
+          </p>
+          <Button type="button" variant="ghost" onClick={handleDownloadTemplate}>
+            Download template
+          </Button>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleCsvFileSelected}
+            className="min-h-control rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          {importFileError ? <p className="text-sm text-critical-600">{importFileError}</p> : null}
+          {importPlan ? (
+            <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 p-3">
+              <p className="text-sm text-neutral-700">
+                {importFileName} — <span className="font-medium text-calm-700">{importPlan.valid.length} ready</span>
+                {importPlan.errors.length > 0 ? (
+                  <>
+                    , <span className="font-medium text-caution-700">{importPlan.errors.length} with errors</span>
+                  </>
+                ) : null}
+              </p>
+              {importPlan.errors.length > 0 ? (
+                <ul className="flex flex-col gap-1 text-xs text-neutral-500">
+                  {importPlan.errors.map((e, idx) => (
+                    <li key={idx}>
+                      Row {e.row}: {e.message}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <Button type="button" disabled={importPlan.valid.length === 0 || isImporting} onClick={handleImportStudents}>
+                {isImporting ? "Importing..." : `Import ${importPlan.valid.length} student${importPlan.valid.length === 1 ? "" : "s"}`}
+              </Button>
+            </div>
+          ) : null}
+          {importSuccess ? <p className="text-sm text-calm-700">{importSuccess}</p> : null}
+        </Card>
+        </div>
 
         <div className="flex flex-col gap-2">
           {filteredStudents.map((s) => (
