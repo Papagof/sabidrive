@@ -9,10 +9,12 @@ import {
   buildReportsCsv,
   summarizeAlerts,
   summarizeAttendance,
+  summarizeOnTime,
   summarizeTrips,
   useSupabaseClient,
   type AlertRow,
   type AttendanceRow,
+  type OnTimeCheckInRow,
   type TripRow
 } from "@sabidrive/supabase";
 
@@ -55,6 +57,8 @@ export default function ReportsPage() {
   const [trips, setTrips] = useState<TripRow[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
+  const [onTimeRows, setOnTimeRows] = useState<OnTimeCheckInRow[]>([]);
+  const [schoolTimezone, setSchoolTimezone] = useState<string>("UTC");
   const [smsCount, setSmsCount] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -66,12 +70,16 @@ export default function ReportsPage() {
       adminQueries.getTripsInRange(supabase, profile.school_id, since),
       adminQueries.getAttendanceInRange(supabase, profile.school_id, since),
       adminQueries.getAlertsInRange(supabase, profile.school_id, since),
+      adminQueries.getOnTimeCheckInsInRange(supabase, profile.school_id, since),
+      adminQueries.getSchool(supabase, profile.school_id),
       adminQueries.getSmsCountInRange(supabase, since)
     ])
-      .then(([tripsData, attendanceData, alertsData, smsData]) => {
+      .then(([tripsData, attendanceData, alertsData, onTimeData, school, smsData]) => {
         setTrips(tripsData);
         setAttendance(attendanceData);
         setAlerts(alertsData);
+        setOnTimeRows(onTimeData);
+        setSchoolTimezone(school.timezone);
         setSmsCount(smsData);
       })
       .finally(() => setIsFetching(false));
@@ -80,6 +88,7 @@ export default function ReportsPage() {
   const tripsSummary = useMemo(() => summarizeTrips(trips), [trips]);
   const attendanceSummary = useMemo(() => summarizeAttendance(attendance), [attendance]);
   const alertsSummary = useMemo(() => summarizeAlerts(alerts), [alerts]);
+  const onTimeSummary = useMemo(() => summarizeOnTime(onTimeRows, schoolTimezone), [onTimeRows, schoolTimezone]);
 
   function handleExportCsv() {
     const today = new Date().toISOString().slice(0, 10);
@@ -89,6 +98,7 @@ export default function ReportsPage() {
       trips: tripsSummary,
       attendance: attendanceSummary,
       alerts: alertsSummary,
+      onTime: onTimeSummary,
       smsCount
     });
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -218,6 +228,53 @@ export default function ReportsPage() {
               </div>
             ) : null}
             {alertsSummary.total === 0 ? <p className="text-sm text-neutral-500">No incidents in this range.</p> : null}
+          </Card>
+
+          <Card className="flex flex-col gap-3">
+            <h2 className="font-medium">On-Time Performance</h2>
+            {onTimeSummary.total > 0 ? (
+              <>
+                <div className="flex gap-4 text-sm text-neutral-600">
+                  <span>
+                    <span className="text-xl font-semibold text-calm-700">{Math.round(onTimeSummary.onTimePct)}%</span> on time
+                  </span>
+                  <span>
+                    <span className="text-xl font-semibold text-caution-700">{onTimeSummary.late}</span> late
+                  </span>
+                  <span>
+                    <span className="text-xl font-semibold text-neutral-500">{onTimeSummary.early}</span> early
+                  </span>
+                </div>
+                {onTimeSummary.avgDeviationMinutes != null ? (
+                  <p className="text-sm text-neutral-600">
+                    Average deviation: {Math.round(onTimeSummary.avgDeviationMinutes)} min {onTimeSummary.avgDeviationMinutes >= 0 ? "late" : "early"}
+                  </p>
+                ) : null}
+                {onTimeSummary.byRoute.length > 0 ? (
+                  <div className="flex flex-col gap-2 border-t border-neutral-100 pt-3">
+                    <p className="text-sm font-medium text-neutral-700">By route</p>
+                    {onTimeSummary.byRoute.map((r) => (
+                      <BarRow
+                        key={r.routeId}
+                        label={r.routeName ?? "Unnamed route"}
+                        count={Math.round(r.onTimePct)}
+                        maxCount={100}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+                {onTimeSummary.skippedNoSchedule > 0 ? (
+                  <p className="text-xs text-neutral-400">
+                    {onTimeSummary.skippedNoSchedule} stop{onTimeSummary.skippedNoSchedule === 1 ? "" : "s"} excluded (no scheduled time set).
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-sm text-neutral-500">
+                No check-ins with a scheduled time in this range — a stop needs both a scheduled time set and at least one
+                student check-in to measure on-time performance.
+              </p>
+            )}
           </Card>
 
           <Card className="flex flex-col gap-3">

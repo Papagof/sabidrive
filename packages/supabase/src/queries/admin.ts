@@ -406,3 +406,39 @@ export async function getSmsCountInRange(supabase: SabiDriveSupabaseClient, sinc
   if (error) throw error;
   return count ?? 0;
 }
+
+// Only check_in_events with a stop_id are usable for on-time comparison (a
+// stop nobody boarded/alighted at that day has no actual-arrival signal).
+export async function getOnTimeCheckInsInRange(supabase: SabiDriveSupabaseClient, schoolId: string, sinceISODate: string) {
+  const { data, error } = await supabase
+    .from("check_in_events")
+    .select(
+      "trip_id, event_type, occurred_at, stop_id, trips!inner(school_id, trip_date, direction, route_id, routes(name)), stops(scheduled_time)"
+    )
+    .eq("trips.school_id", schoolId)
+    .gte("trips.trip_date", sinceISODate)
+    .not("stop_id", "is", null);
+  if (error) throw error;
+  return (
+    data as unknown as {
+      trip_id: string;
+      event_type: "board" | "alight";
+      occurred_at: string;
+      stop_id: string;
+      trips: { trip_date: string; direction: "pickup" | "dropoff"; route_id: string; routes: { name: string } | null } | null;
+      stops: { scheduled_time: string | null } | null;
+    }[]
+  )
+    .filter((r) => r.trips !== null)
+    .map((r) => ({
+      trip_id: r.trip_id,
+      event_type: r.event_type,
+      occurred_at: r.occurred_at,
+      stop_id: r.stop_id,
+      trip_date: r.trips!.trip_date,
+      direction: r.trips!.direction,
+      route_id: r.trips!.route_id,
+      route_name: r.trips!.routes?.name ?? null,
+      scheduled_time: r.stops?.scheduled_time ?? null
+    }));
+}

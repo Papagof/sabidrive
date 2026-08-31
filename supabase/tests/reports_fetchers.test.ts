@@ -5,8 +5,10 @@ import {
   createAlertDirect,
   createAttendanceDirect,
   createBus,
+  createCheckInEventDirect,
   createRoute,
   createSchool,
+  createStop,
   createStudent,
   createTripDirect,
   createUser,
@@ -29,7 +31,9 @@ describe("admin reports fetchers", () => {
   let adminClient: SabiDriveSupabaseClient;
   let driverId: string;
   let routeId: string;
+  let stopId: string;
   let sinceISODate: string;
+  let onTimeOccurredAt: string;
 
   beforeAll(async () => {
     schoolId = await createSchool(`Reports Test School ${suffix}`);
@@ -43,6 +47,7 @@ describe("admin reports fetchers", () => {
     routeId = await createRoute(schoolId, "Reports Test Route");
     const busId = await createBus(schoolId, "Reports Test Bus", driverId, routeId);
     const student = await createStudent(schoolId, "Report", "Kid", routeId);
+    stopId = await createStop(schoolId, routeId, "Reports Test Stop", 1, "08:00:00");
 
     const today = new Date().toISOString().slice(0, 10);
     sinceISODate = today;
@@ -63,6 +68,17 @@ describe("admin reports fetchers", () => {
 
     await createAlertDirect({ schoolId, tripId: completedTripId, type: "speeding", severity: "warning" });
     await createAlertDirect({ schoolId, tripId: completedTripId, type: "sos", severity: "critical", resolvedAt: new Date().toISOString() });
+
+    // School timezone is Africa/Lagos (UTC+1, no DST), stop scheduled_time is 08:00 local
+    // -> 07:00 UTC. 3 min after that, well within any reasonable on-time threshold.
+    onTimeOccurredAt = `${today}T07:03:00Z`;
+    await createCheckInEventDirect({
+      tripId: completedTripId,
+      studentId: student.id,
+      stopId,
+      eventType: "board",
+      occurredAt: onTimeOccurredAt
+    });
 
     adminClient = await signInClient(`rpt-admin-${suffix}@example.com`, password);
   });
@@ -99,5 +115,18 @@ describe("admin reports fetchers", () => {
   it("getSmsCountInRange returns a number without throwing", async () => {
     const count = await adminQueries.getSmsCountInRange(adminClient, sinceISODate);
     expect(typeof count).toBe("number");
+  });
+
+  it("getOnTimeCheckInsInRange resolves the stop's scheduled_time and the trip's direction/route through the embeds", async () => {
+    const rows = await adminQueries.getOnTimeCheckInsInRange(adminClient, schoolId, sinceISODate);
+    expect(rows).toHaveLength(1);
+    const row = rows[0]!;
+    expect(row.stop_id).toBe(stopId);
+    expect(row.event_type).toBe("board");
+    expect(new Date(row.occurred_at).getTime()).toBe(new Date(onTimeOccurredAt).getTime());
+    expect(row.direction).toBe("pickup");
+    expect(row.route_id).toBe(routeId);
+    expect(row.route_name).toBe("Reports Test Route");
+    expect(row.scheduled_time).toBe("08:00:00");
   });
 });

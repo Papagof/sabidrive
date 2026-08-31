@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { buildReportsCsv, summarizeAlerts, summarizeAttendance, summarizeTrips } from "./reports";
-import type { AlertRow, AttendanceRow, AlertsSummary, AttendanceSummary, TripRow, TripsSummary } from "./reports";
+import { buildReportsCsv, summarizeAlerts, summarizeAttendance, summarizeOnTime, summarizeTrips, zonedTimeToUtc } from "./reports";
+import type {
+  AlertRow,
+  AttendanceRow,
+  AlertsSummary,
+  AttendanceSummary,
+  OnTimeCheckInRow,
+  OnTimeSummary,
+  TripRow,
+  TripsSummary
+} from "./reports";
 
 describe("summarizeTrips", () => {
   it("counts completed/cancelled and computes average duration", () => {
@@ -135,6 +144,16 @@ describe("buildReportsCsv", () => {
     resolvedPct: 100,
     topDrivers: [{ driverId: "d1", driverName: "Jane Doe", count: 3 }]
   };
+  const onTime: OnTimeSummary = {
+    total: 5,
+    onTime: 4,
+    late: 1,
+    early: 0,
+    onTimePct: 80,
+    avgDeviationMinutes: 2,
+    skippedNoSchedule: 1,
+    byRoute: [{ routeId: "r1", routeName: "Route 1", onTimePct: 80, count: 5 }]
+  };
 
   it("includes every section with correct headers and values", () => {
     const csv = buildReportsCsv({
@@ -143,6 +162,7 @@ describe("buildReportsCsv", () => {
       trips,
       attendance,
       alerts,
+      onTime,
       smsCount: 42
     });
     const lines = csv.split("\n");
@@ -162,6 +182,9 @@ describe("buildReportsCsv", () => {
     expect(csv).toContain("speeding,2");
     expect(csv).toContain("Top Drivers");
     expect(csv).toContain("Jane Doe,3");
+    expect(csv).toContain("On-Time Performance");
+    expect(csv).toContain("On time %,80");
+    expect(csv).toContain("Stops with no scheduled time (excluded),1");
     expect(csv).toContain("SMS");
     expect(csv).toContain("Simulated texts sent,42");
   });
@@ -173,6 +196,7 @@ describe("buildReportsCsv", () => {
       trips: { ...trips, byRoute: [{ routeId: "r1", routeName: "Elm St, North Loop", count: 4 }] },
       attendance,
       alerts: { ...alerts, topDrivers: [{ driverId: "d1", driverName: "Doe, Jane", count: 1 }] },
+      onTime,
       smsCount: 0
     });
     expect(csv).toContain('"Elm St, North Loop",4');
@@ -191,12 +215,23 @@ describe("buildReportsCsv", () => {
       missedPct: 0
     };
     const emptyAlerts: AlertsSummary = { total: 0, byType: [], bySeverity: [], resolvedPct: 0, topDrivers: [] };
+    const emptyOnTime: OnTimeSummary = {
+      total: 0,
+      onTime: 0,
+      late: 0,
+      early: 0,
+      onTimePct: 0,
+      avgDeviationMinutes: null,
+      skippedNoSchedule: 0,
+      byRoute: []
+    };
     const csv = buildReportsCsv({
       rangeLabel: "90d",
       generatedAtISODate: "2026-08-31",
       trips: emptyTrips,
       attendance: emptyAttendance,
       alerts: emptyAlerts,
+      onTime: emptyOnTime,
       smsCount: 0
     });
     expect(csv).not.toContain("By Route");
@@ -204,5 +239,104 @@ describe("buildReportsCsv", () => {
     expect(csv).not.toContain("By Type");
     expect(csv).not.toContain("Top Drivers");
     expect(csv).toContain("Average duration (min),");
+    expect(csv).toContain("Average deviation (min),");
+  });
+});
+
+describe("zonedTimeToUtc", () => {
+  it("converts a non-DST (CST, UTC-6) America/Chicago wall-clock time correctly", () => {
+    const utc = zonedTimeToUtc("2026-01-15", "08:00:00", "America/Chicago");
+    expect(utc.toISOString()).toBe("2026-01-15T14:00:00.000Z");
+  });
+
+  it("converts a DST (CDT, UTC-5) America/Chicago wall-clock time correctly", () => {
+    const utc = zonedTimeToUtc("2026-07-15", "08:00:00", "America/Chicago");
+    expect(utc.toISOString()).toBe("2026-07-15T13:00:00.000Z");
+  });
+
+  it("returns the same instant for UTC itself", () => {
+    const utc = zonedTimeToUtc("2026-03-01", "12:30:00", "UTC");
+    expect(utc.toISOString()).toBe("2026-03-01T12:30:00.000Z");
+  });
+});
+
+describe("summarizeOnTime", () => {
+  const baseRow: OnTimeCheckInRow = {
+    trip_id: "t1",
+    stop_id: "s1",
+    event_type: "board",
+    occurred_at: "2026-01-15T14:00:00Z",
+    trip_date: "2026-01-15",
+    direction: "pickup",
+    route_id: "r1",
+    route_name: "Route 1",
+    scheduled_time: "08:00:00"
+  };
+
+  it("counts a check-in within the threshold as on time", () => {
+    const rows: OnTimeCheckInRow[] = [{ ...baseRow, occurred_at: "2026-01-15T14:02:00Z" }]; // 2 min late
+    const summary = summarizeOnTime(rows, "America/Chicago");
+    expect(summary.total).toBe(1);
+    expect(summary.onTime).toBe(1);
+    expect(summary.late).toBe(0);
+    expect(summary.early).toBe(0);
+  });
+
+  it("is on time exactly at the threshold boundary", () => {
+    const rows: OnTimeCheckInRow[] = [{ ...baseRow, occurred_at: "2026-01-15T14:05:00Z" }]; // exactly 5 min late
+    const summary = summarizeOnTime(rows, "America/Chicago", 5);
+    expect(summary.onTime).toBe(1);
+    expect(summary.late).toBe(0);
+  });
+
+  it("counts a check-in past the threshold as late, and one before as early", () => {
+    const late: OnTimeCheckInRow[] = [{ ...baseRow, occurred_at: "2026-01-15T14:10:00Z" }]; // 10 min late
+    const early: OnTimeCheckInRow[] = [{ ...baseRow, occurred_at: "2026-01-15T13:45:00Z" }]; // 15 min early
+    expect(summarizeOnTime(late, "America/Chicago").late).toBe(1);
+    expect(summarizeOnTime(early, "America/Chicago").early).toBe(1);
+  });
+
+  it("ignores an event_type that doesn't match the trip's direction", () => {
+    const rows: OnTimeCheckInRow[] = [{ ...baseRow, direction: "dropoff", event_type: "board" }];
+    expect(summarizeOnTime(rows, "America/Chicago").total).toBe(0);
+  });
+
+  it("groups by (trip_id, stop_id) and keeps the earliest occurred_at", () => {
+    const rows: OnTimeCheckInRow[] = [
+      { ...baseRow, occurred_at: "2026-01-15T14:20:00Z" }, // 20 min late -- would be "late"
+      { ...baseRow, occurred_at: "2026-01-15T14:02:00Z" } // 2 min late -- earliest, should win -- "on time"
+    ];
+    const summary = summarizeOnTime(rows, "America/Chicago");
+    expect(summary.total).toBe(1);
+    expect(summary.onTime).toBe(1);
+  });
+
+  it("excludes stops with no scheduled_time but counts them in skippedNoSchedule", () => {
+    const rows: OnTimeCheckInRow[] = [{ ...baseRow, scheduled_time: null }];
+    const summary = summarizeOnTime(rows, "America/Chicago");
+    expect(summary.total).toBe(0);
+    expect(summary.skippedNoSchedule).toBe(1);
+  });
+
+  it("computes byRoute on-time percentage", () => {
+    const rows: OnTimeCheckInRow[] = [
+      { ...baseRow, stop_id: "s1", occurred_at: "2026-01-15T14:02:00Z" }, // on time
+      { ...baseRow, stop_id: "s2", occurred_at: "2026-01-15T14:20:00Z" } // late
+    ];
+    const summary = summarizeOnTime(rows, "America/Chicago");
+    expect(summary.byRoute).toEqual([{ routeId: "r1", routeName: "Route 1", onTimePct: 50, count: 2 }]);
+  });
+
+  it("handles an empty range", () => {
+    expect(summarizeOnTime([], "America/Chicago")).toEqual({
+      total: 0,
+      onTime: 0,
+      late: 0,
+      early: 0,
+      onTimePct: 0,
+      avgDeviationMinutes: null,
+      skippedNoSchedule: 0,
+      byRoute: []
+    });
   });
 });

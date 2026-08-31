@@ -218,6 +218,52 @@ export async function createAttendanceDirect(tripId: string, studentId: string, 
   if (!r.ok) throw new Error(`createAttendanceDirect failed: ${JSON.stringify(r.body)}`);
 }
 
+export async function createStop(
+  schoolId: string,
+  routeId: string,
+  name: string,
+  sequenceNo: number,
+  scheduledTime: string | null = "08:00:00"
+): Promise<string> {
+  const r = await svc("/rest/v1/stops", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      school_id: schoolId,
+      route_id: routeId,
+      name,
+      sequence_no: sequenceNo,
+      lat: 6.5,
+      lng: 3.3,
+      scheduled_time: scheduledTime
+    })
+  });
+  if (!r.ok) throw new Error(`createStop(${name}) failed: ${JSON.stringify(r.body)}`);
+  return r.body[0].id as string;
+}
+
+/** Direct service-role insert -- for seeding report-fetcher test fixtures only; real check-ins are normally only ever created via check_in(). */
+export async function createCheckInEventDirect(input: {
+  tripId: string;
+  studentId: string;
+  stopId: string;
+  eventType: "board" | "alight";
+  occurredAt: string;
+}): Promise<void> {
+  const r = await svc("/rest/v1/check_in_events", {
+    method: "POST",
+    body: JSON.stringify({
+      trip_id: input.tripId,
+      student_id: input.studentId,
+      stop_id: input.stopId,
+      event_type: input.eventType,
+      method: "qr",
+      occurred_at: input.occurredAt
+    })
+  });
+  if (!r.ok) throw new Error(`createCheckInEventDirect failed: ${JSON.stringify(r.body)}`);
+}
+
 export async function createAlertDirect(input: {
   schoolId: string;
   tripId: string;
