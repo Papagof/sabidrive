@@ -13,6 +13,7 @@ export interface Profile {
   role: "parent" | "driver" | "admin" | "student";
   school_id: string | null;
   avatar_url: string | null;
+  notification_prefs: Record<string, boolean>;
 }
 
 export interface SessionState {

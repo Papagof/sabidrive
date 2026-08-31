@@ -540,6 +540,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          notification_prefs: Json
           phone: string | null
           phone_verified: boolean
           role: string
@@ -553,6 +554,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id: string
+          notification_prefs?: Json
           phone?: string | null
           phone_verified?: boolean
           role: string
@@ -566,6 +568,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          notification_prefs?: Json
           phone?: string | null
           phone_verified?: boolean
           role?: string

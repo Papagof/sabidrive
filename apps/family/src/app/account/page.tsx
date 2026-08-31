@@ -8,6 +8,18 @@ import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 type Step = "idle" | "entering_phone" | "code_sent";
 
+type NotificationType = "boarding" | "alighting" | "delay" | "geofence" | "mismatch" | "announcement" | "message";
+
+const NOTIFICATION_TYPES: { type: NotificationType; label: string }[] = [
+  { type: "boarding", label: "Boarding" },
+  { type: "alighting", label: "Drop-off" },
+  { type: "mismatch", label: "Missed pickup" },
+  { type: "delay", label: "Delays" },
+  { type: "geofence", label: "Geofence alerts" },
+  { type: "announcement", label: "School announcements" },
+  { type: "message", label: "Trip messages" }
+];
+
 export default function AccountPage() {
   const { profile, isLoading } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
@@ -23,6 +35,9 @@ export default function AccountPage() {
   const [isSending, setIsSending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const [notificationPrefs, setNotificationPrefs] = useState<Record<string, boolean>>({});
+  const [notificationError, setNotificationError] = useState<string | null>(null);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setEmailConfirmed(Boolean(data.user?.email_confirmed_at));
@@ -33,7 +48,23 @@ export default function AccountPage() {
     if (!profile) return;
     setPhoneVerified(profile.phone_verified);
     setVerifiedPhone(profile.phone_verified ? profile.phone : null);
+    setNotificationPrefs(profile.notification_prefs ?? {});
   }, [profile]);
+
+  async function handleToggleNotification(type: NotificationType) {
+    if (!profile) return;
+    const nextEnabled = !(notificationPrefs[type] ?? true);
+    const previous = notificationPrefs;
+    const next = { ...notificationPrefs, [type]: nextEnabled };
+    setNotificationPrefs(next);
+    setNotificationError(null);
+    try {
+      await userQueries.updateNotificationPrefs(supabase, profile.id, next);
+    } catch (err) {
+      setNotificationPrefs(previous);
+      setNotificationError(err instanceof Error ? err.message : "Failed to save notification preference");
+    }
+  }
 
   if (isLoading) return null;
 
@@ -155,6 +186,36 @@ export default function AccountPage() {
         {error ? (
           <Banner tone="caution" title="Couldn't complete that">
             {error}
+          </Banner>
+        ) : null}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <div>
+          <p className="font-medium">Notifications</p>
+          <p className="text-sm text-neutral-500">Choose which alerts you get pushed or texted. SOS alerts always come through.</p>
+        </div>
+        <div className="flex flex-col gap-2">
+          {NOTIFICATION_TYPES.map(({ type, label }) => {
+            const enabled = notificationPrefs[type] ?? true;
+            return (
+              <div key={type} className="flex items-center justify-between">
+                <span className="text-sm text-neutral-700">{label}</span>
+                <Button
+                  type="button"
+                  size="md"
+                  variant={enabled ? "primary" : "secondary"}
+                  onClick={() => handleToggleNotification(type)}
+                >
+                  {enabled ? "On" : "Off"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+        {notificationError ? (
+          <Banner tone="caution" title="Couldn't save that">
+            {notificationError}
           </Banner>
         ) : null}
       </Card>

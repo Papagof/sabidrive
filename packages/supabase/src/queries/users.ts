@@ -1,5 +1,26 @@
 import type { SabiDriveSupabaseClient } from "../client";
 
+export type NotificationPrefType = "boarding" | "alighting" | "delay" | "geofence" | "mismatch" | "announcement" | "message";
+
+/**
+ * Overwrites the signed-in user's stored notification_prefs (gates push/SMS
+ * delivery for non-sos types -- see dispatch_push_notification()/
+ * queue_sms_fallback() in 0038_notification_preferences.sql; sos is never
+ * mutable). A plain client-side write backed by the existing
+ * profiles_update_own RLS policy, same directness as push.ts's
+ * upsertPushSubscription -- no RPC needed. Callers pass the full merged
+ * object (current prefs + the one toggled key) since the current value is
+ * already in hand from useSession, avoiding an extra read round trip.
+ */
+export async function updateNotificationPrefs(
+  supabase: SabiDriveSupabaseClient,
+  userId: string,
+  prefs: Record<string, boolean>
+): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ notification_prefs: prefs }).eq("id", userId);
+  if (error) throw error;
+}
+
 export interface InviteUserInput {
   email: string;
   full_name: string;
