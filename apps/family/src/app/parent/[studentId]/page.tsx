@@ -157,9 +157,14 @@ export default function StudentTrackingPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-8">
-      <button onClick={() => router.push("/parent")} className="self-start text-sm text-brand-700">
-        ← All children
-      </button>
+      <div className="flex items-center justify-between">
+        <button onClick={() => router.push("/parent")} className="text-sm text-brand-700">
+          ← All children
+        </button>
+        <Link href={`/parent/${studentId}/history`} className="text-sm text-brand-700">
+          Trip History
+        </Link>
+      </div>
       <h1 className="text-2xl font-semibold text-brand-800">
         {student.first_name} {student.last_name}
       </h1>

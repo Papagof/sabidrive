@@ -35,7 +35,10 @@ export const statusToneMap: Record<string, StatusTone> = {
   active: "info",
   inactive: "neutral",
   resolved: "positive",
-  simulated_sent: "neutral"
+  simulated_sent: "neutral",
+  on_time: "positive",
+  late: "caution",
+  early: "info"
 };
 
 export function StatusPill({ label, tone = "neutral", className }: StatusPillProps) {

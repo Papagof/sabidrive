@@ -1,4 +1,5 @@
 import type { SabiDriveSupabaseClient } from "../client";
+import type { TripHistoryAttendanceRow, TripHistoryCheckInRow } from "../tripHistory";
 
 interface GuardianStudentRow {
   students: {
@@ -80,4 +81,84 @@ export async function getActiveTripForRoute(supabase: SabiDriveSupabaseClient, r
     .maybeSingle();
   if (error) throw error;
   return data;
+}
+
+export interface TripHistoryData {
+  attendance: TripHistoryAttendanceRow[];
+  checkIns: TripHistoryCheckInRow[];
+  timeZone: string;
+}
+
+/**
+ * Raw rows for a student's trip history (see tripHistory.ts's buildTripHistory
+ * for the merge/on-time logic) -- anchored on attendance_expectations (which
+ * always exists once a trip starts) rather than only check_in_events, so a
+ * missed pickup still shows up rather than being silently absent. can_view_trip
+ * already permits a guardian to read past (not just in-progress) trips for
+ * their own child, so no new RLS is needed here.
+ */
+export async function getTripHistoryForStudent(
+  supabase: SabiDriveSupabaseClient,
+  studentId: string,
+  sinceISODate: string
+): Promise<TripHistoryData> {
+  const { data: student, error: studentError } = await supabase
+    .from("students")
+    .select("school_id")
+    .eq("id", studentId)
+    .single();
+  if (studentError) throw studentError;
+
+  const [schoolRes, attendanceRes, checkInRes] = await Promise.all([
+    supabase.from("schools").select("timezone").eq("id", student.school_id).single(),
+    supabase
+      .from("attendance_expectations")
+      .select("trip_id, status, trips!inner(trip_date, direction, status)")
+      .eq("student_id", studentId)
+      .gte("trips.trip_date", sinceISODate),
+    supabase
+      .from("check_in_events")
+      .select("trip_id, event_type, occurred_at, stops(name, scheduled_time), trips!inner(trip_date)")
+      .eq("student_id", studentId)
+      .gte("trips.trip_date", sinceISODate)
+  ]);
+  if (schoolRes.error) throw schoolRes.error;
+  if (attendanceRes.error) throw attendanceRes.error;
+  if (checkInRes.error) throw checkInRes.error;
+
+  const attendance = (
+    attendanceRes.data as unknown as {
+      trip_id: string;
+      status: string;
+      trips: { trip_date: string; direction: "pickup" | "dropoff"; status: string } | null;
+    }[]
+  )
+    .filter((a) => a.trips !== null)
+    .map((a) => ({
+      trip_id: a.trip_id,
+      status: a.status,
+      trip_date: a.trips!.trip_date,
+      direction: a.trips!.direction,
+      trip_status: a.trips!.status
+    }));
+
+  const checkIns = (
+    checkInRes.data as unknown as {
+      trip_id: string;
+      event_type: "board" | "alight";
+      occurred_at: string;
+      stops: { name: string; scheduled_time: string | null } | null;
+      trips: { trip_date: string } | null;
+    }[]
+  )
+    .filter((c) => c.trips !== null)
+    .map((c) => ({
+      trip_id: c.trip_id,
+      event_type: c.event_type,
+      occurred_at: c.occurred_at,
+      stop_name: c.stops?.name ?? null,
+      scheduled_time: c.stops?.scheduled_time ?? null
+    }));
+
+  return { attendance, checkIns, timeZone: schoolRes.data.timezone };
 }
