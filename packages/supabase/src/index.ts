@@ -11,6 +11,7 @@ export * from "./reports";
 export * from "./studentImport";
 export * from "./tripHistory";
 export * from "./routeManifest";
+export * from "./adminCsvExports";
 export * as tripQueries from "./queries/trips";
 export * as studentQueries from "./queries/students";
 export * as adminQueries from "./queries/admin";

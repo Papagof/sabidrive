@@ -6,6 +6,8 @@
  * the I/O that feeds it (run-local.ts).
  */
 
+import { csvRow } from "./csv";
+
 export interface TripRow {
   status: string;
   route_id: string;
@@ -259,17 +261,6 @@ export function summarizeOnTime(rows: OnTimeCheckInRow[], timeZone: string, thre
     skippedNoSchedule,
     byRoute
   };
-}
-
-/** Quotes a field if it contains a comma, quote, or newline; doubles up any internal quotes. */
-function csvEscape(value: string | number): string {
-  const str = String(value);
-  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
-  return str;
-}
-
-function csvRow(...cells: (string | number)[]): string {
-  return cells.map(csvEscape).join(",");
 }
 
 export interface ReportsCsvParams {

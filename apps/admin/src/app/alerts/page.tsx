@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Button, Card, StatusPill } from "@sabidrive/ui";
-import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
+import { adminQueries, buildAlertsCsv, useSupabaseClient } from "@sabidrive/supabase";
 
 interface AlertRow {
   id: string;
@@ -63,22 +63,39 @@ export default function AlertsPage() {
 
   const filteredAlerts = severityFilter === "all" ? alerts : alerts.filter((a) => a.severity === severityFilter);
 
+  function handleExportCsv() {
+    const csv = buildAlertsCsv(filteredAlerts);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sabidrive-alerts-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <AdminShell>
       <h1 className="mb-4 text-2xl font-semibold text-brand-800">Alerts</h1>
 
-      <div className="mb-4 flex gap-2">
-        {SEVERITY_FILTERS.map((sev) => (
-          <Button
-            key={sev}
-            variant={severityFilter === sev ? "primary" : "secondary"}
-            size="md"
-            onClick={() => setSeverityFilter(sev)}
-          >
-            {sev}
-          </Button>
-        ))}
+      <div className="mb-1 flex items-center justify-between">
+        <div className="flex gap-2">
+          {SEVERITY_FILTERS.map((sev) => (
+            <Button
+              key={sev}
+              variant={severityFilter === sev ? "primary" : "secondary"}
+              size="md"
+              onClick={() => setSeverityFilter(sev)}
+            >
+              {sev}
+            </Button>
+          ))}
+        </div>
+        <Button variant="secondary" size="md" onClick={handleExportCsv} disabled={filteredAlerts.length === 0}>
+          Export CSV
+        </Button>
       </div>
+      <p className="mb-4 text-xs text-neutral-500">Exports the 50 most recent alerts shown here.</p>
 
       <div className="flex flex-col gap-2">
         {filteredAlerts.map((alert) => (
