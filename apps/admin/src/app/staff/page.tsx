@@ -36,6 +36,7 @@ export default function StaffPage() {
   const [people, setPeople] = useState<StaffRow[]>([]);
   const [buses, setBuses] = useState<DriverBusRow[]>([]);
   const [routes, setRoutes] = useState<RouteOption[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [invitingRole, setInvitingRole] = useState<"driver" | "parent" | "admin" | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -102,9 +103,16 @@ export default function StaffPage() {
 
   if (isLoading) return null;
 
-  const admins = people.filter((p) => p.role === "admin");
-  const drivers = people.filter((p) => p.role === "driver");
-  const guardians = people.filter((p) => p.role === "parent");
+  const query = searchQuery.trim().toLowerCase();
+  const filteredPeople =
+    query.length === 0
+      ? people
+      : people.filter((p) => p.full_name.toLowerCase().includes(query) || (p.email ?? "").toLowerCase().includes(query));
+  const hasActiveSearch = query.length > 0;
+
+  const admins = filteredPeople.filter((p) => p.role === "admin");
+  const drivers = filteredPeople.filter((p) => p.role === "driver");
+  const guardians = filteredPeople.filter((p) => p.role === "parent");
 
   return (
     <AdminShell>
@@ -122,6 +130,13 @@ export default function StaffPage() {
           </Button>
         </div>
       </div>
+
+      <input
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search by name or email…"
+        className="mb-4 min-h-control w-full max-w-md rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+      />
 
       {invitingRole ? (
         <Card className="mb-4 max-w-md">
@@ -155,7 +170,9 @@ export default function StaffPage() {
                 <p className="text-sm text-neutral-500">{a.email}</p>
               </Card>
             ))}
-            {admins.length === 0 ? <p className="text-neutral-500">No admins yet.</p> : null}
+            {admins.length === 0 ? (
+              <p className="text-neutral-500">{hasActiveSearch ? "No matches." : "No admins yet."}</p>
+            ) : null}
           </div>
         </div>
         <div>
@@ -227,7 +244,9 @@ export default function StaffPage() {
               </Card>
               );
             })}
-            {drivers.length === 0 ? <p className="text-neutral-500">No drivers yet.</p> : null}
+            {drivers.length === 0 ? (
+              <p className="text-neutral-500">{hasActiveSearch ? "No matches." : "No drivers yet."}</p>
+            ) : null}
           </div>
         </div>
         <div>
@@ -260,7 +279,9 @@ export default function StaffPage() {
                 )}
               </Card>
             ))}
-            {guardians.length === 0 ? <p className="text-neutral-500">No guardians yet.</p> : null}
+            {guardians.length === 0 ? (
+              <p className="text-neutral-500">{hasActiveSearch ? "No matches." : "No guardians yet."}</p>
+            ) : null}
           </div>
         </div>
       </div>
