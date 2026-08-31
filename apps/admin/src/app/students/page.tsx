@@ -56,6 +56,8 @@ export default function StudentsPage() {
   const [guardians, setGuardians] = useState<GuardianOption[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [routeFilter, setRouteFilter] = useState("");
+  const [stopFilter, setStopFilter] = useState("");
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -251,26 +253,65 @@ export default function StudentsPage() {
   }
 
   const stopsForRoute = stops.filter((s) => s.route_id === routeId);
+  const stopsForFilterRoute = stops.filter((s) => s.route_id === routeFilter);
 
   const query = searchQuery.trim().toLowerCase();
-  const filteredStudents =
-    query.length === 0
-      ? students
-      : students.filter((s) => {
-          const studentName = `${s.first_name} ${s.last_name}`.toLowerCase();
-          const guardianNames = s.guardian_student_links.map((l) => l.profiles?.full_name?.toLowerCase() ?? "");
-          return studentName.includes(query) || guardianNames.some((name) => name.includes(query));
-        });
+  const hasActiveFilter = query.length > 0 || routeFilter.length > 0 || stopFilter.length > 0;
+  const filteredStudents = students.filter((s) => {
+    if (query.length > 0) {
+      const studentName = `${s.first_name} ${s.last_name}`.toLowerCase();
+      const guardianNames = s.guardian_student_links.map((l) => l.profiles?.full_name?.toLowerCase() ?? "");
+      if (!studentName.includes(query) && !guardianNames.some((name) => name.includes(query))) return false;
+    }
+    if (routeFilter === "__unassigned__") {
+      if (s.default_route_id != null) return false;
+    } else if (routeFilter.length > 0 && s.default_route_id !== routeFilter) {
+      return false;
+    }
+    if (stopFilter.length > 0 && s.default_stop_id !== stopFilter) return false;
+    return true;
+  });
 
   return (
     <AdminShell>
       <h1 className="mb-4 text-2xl font-semibold text-brand-800">Students</h1>
-      <input
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search by student or parent name…"
-        className="mb-4 min-h-control w-full max-w-md rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
-      />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by student or parent name…"
+          className="min-h-control w-full max-w-md rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+        />
+        <select
+          value={routeFilter}
+          onChange={(e) => {
+            setRouteFilter(e.target.value);
+            setStopFilter("");
+          }}
+          className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+        >
+          <option value="">All routes</option>
+          {routes.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
+          ))}
+          <option value="__unassigned__">Unassigned</option>
+        </select>
+        <select
+          value={stopFilter}
+          onChange={(e) => setStopFilter(e.target.value)}
+          disabled={routeFilter.length === 0 || routeFilter === "__unassigned__"}
+          className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+        >
+          <option value="">All stops</option>
+          {stopsForFilterRoute.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-4">
         <Card>
@@ -493,8 +534,8 @@ export default function StudentsPage() {
             </Card>
           ))}
           {students.length === 0 ? <p className="text-neutral-500">No students yet.</p> : null}
-          {students.length > 0 && filteredStudents.length === 0 ? (
-            <p className="text-neutral-500">No students or parents match &quot;{searchQuery}&quot;.</p>
+          {students.length > 0 && filteredStudents.length === 0 && hasActiveFilter ? (
+            <p className="text-neutral-500">No students match the current search and filters.</p>
           ) : null}
         </div>
       </div>
