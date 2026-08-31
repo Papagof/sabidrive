@@ -47,8 +47,8 @@ export default function TripHistoryPage() {
   useEffect(() => {
     studentQueries
       .getTripHistoryForStudent(supabase, studentId, sinceISODate(DAYS_BACK))
-      .then(({ attendance, checkIns, timeZone }) => {
-        setEntries(buildTripHistory(attendance, checkIns, timeZone));
+      .then(({ attendance, checkIns, timeZone, onTimeThresholdMinutes }) => {
+        setEntries(buildTripHistory(attendance, checkIns, timeZone, onTimeThresholdMinutes));
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load trip history"));
   }, [supabase, studentId]);

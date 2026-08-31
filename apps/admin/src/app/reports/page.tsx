@@ -59,6 +59,7 @@ export default function ReportsPage() {
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
   const [onTimeRows, setOnTimeRows] = useState<OnTimeCheckInRow[]>([]);
   const [schoolTimezone, setSchoolTimezone] = useState<string>("UTC");
+  const [onTimeThresholdMinutes, setOnTimeThresholdMinutes] = useState<number>(5);
   const [smsCount, setSmsCount] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -80,6 +81,7 @@ export default function ReportsPage() {
         setAlerts(alertsData);
         setOnTimeRows(onTimeData);
         setSchoolTimezone(school.timezone);
+        setOnTimeThresholdMinutes(school.on_time_threshold_minutes);
         setSmsCount(smsData);
       })
       .finally(() => setIsFetching(false));
@@ -88,7 +90,10 @@ export default function ReportsPage() {
   const tripsSummary = useMemo(() => summarizeTrips(trips), [trips]);
   const attendanceSummary = useMemo(() => summarizeAttendance(attendance), [attendance]);
   const alertsSummary = useMemo(() => summarizeAlerts(alerts), [alerts]);
-  const onTimeSummary = useMemo(() => summarizeOnTime(onTimeRows, schoolTimezone), [onTimeRows, schoolTimezone]);
+  const onTimeSummary = useMemo(
+    () => summarizeOnTime(onTimeRows, schoolTimezone, onTimeThresholdMinutes),
+    [onTimeRows, schoolTimezone, onTimeThresholdMinutes]
+  );
 
   function handleExportCsv() {
     const today = new Date().toISOString().slice(0, 10);

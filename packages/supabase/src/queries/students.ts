@@ -87,6 +87,7 @@ export interface TripHistoryData {
   attendance: TripHistoryAttendanceRow[];
   checkIns: TripHistoryCheckInRow[];
   timeZone: string;
+  onTimeThresholdMinutes: number;
 }
 
 /**
@@ -110,7 +111,7 @@ export async function getTripHistoryForStudent(
   if (studentError) throw studentError;
 
   const [schoolRes, attendanceRes, checkInRes] = await Promise.all([
-    supabase.from("schools").select("timezone").eq("id", student.school_id).single(),
+    supabase.from("schools").select("timezone, on_time_threshold_minutes").eq("id", student.school_id).single(),
     supabase
       .from("attendance_expectations")
       .select("trip_id, status, trips!inner(trip_date, direction, status)")
@@ -160,5 +161,10 @@ export async function getTripHistoryForStudent(
       scheduled_time: c.stops?.scheduled_time ?? null
     }));
 
-  return { attendance, checkIns, timeZone: schoolRes.data.timezone };
+  return {
+    attendance,
+    checkIns,
+    timeZone: schoolRes.data.timezone,
+    onTimeThresholdMinutes: schoolRes.data.on_time_threshold_minutes
+  };
 }

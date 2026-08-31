@@ -15,6 +15,7 @@ interface SchoolRow {
   geofence_lat: number | null;
   geofence_lng: number | null;
   geofence_radius_m: number;
+  on_time_threshold_minutes: number;
 }
 
 export default function SettingsPage() {
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   const [geofenceLat, setGeofenceLat] = useState("");
   const [geofenceLng, setGeofenceLng] = useState("");
   const [geofenceRadius, setGeofenceRadius] = useState("300");
+  const [onTimeThreshold, setOnTimeThreshold] = useState("5");
   const [status, setStatus] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
@@ -42,6 +44,7 @@ export default function SettingsPage() {
       setGeofenceLat(s.geofence_lat != null ? String(s.geofence_lat) : "");
       setGeofenceLng(s.geofence_lng != null ? String(s.geofence_lng) : "");
       setGeofenceRadius(String(s.geofence_radius_m));
+      setOnTimeThreshold(String(s.on_time_threshold_minutes));
     });
   }, [supabase, profile?.school_id]);
 
@@ -73,7 +76,8 @@ export default function SettingsPage() {
         timezone,
         geofence_lat: geofenceLat ? Number(geofenceLat) : null,
         geofence_lng: geofenceLng ? Number(geofenceLng) : null,
-        geofence_radius_m: Number(geofenceRadius)
+        geofence_radius_m: Number(geofenceRadius),
+        on_time_threshold_minutes: Number(onTimeThreshold)
       });
       setStatus("Saved.");
     } catch (err) {
@@ -143,6 +147,19 @@ export default function SettingsPage() {
                 onChange={(e) => setGeofenceRadius(e.target.value)}
                 className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
               />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-neutral-700">On-time threshold (minutes)</span>
+              <input
+                type="number"
+                min="1"
+                value={onTimeThreshold}
+                onChange={(e) => setOnTimeThreshold(e.target.value)}
+                className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
+              />
+              <span className="text-xs text-neutral-500">
+                How many minutes early/late still counts as on time, for Reports and parent trip history.
+              </span>
             </label>
             {status ? <p className="text-sm text-neutral-600">{status}</p> : null}
             <Button type="submit" disabled={isSaving}>

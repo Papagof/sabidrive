@@ -320,6 +320,7 @@ export interface UpdateSchoolInput {
   geofence_lat?: number | null;
   geofence_lng?: number | null;
   geofence_radius_m?: number;
+  on_time_threshold_minutes?: number;
 }
 
 export async function updateSchool(supabase: SabiDriveSupabaseClient, schoolId: string, input: UpdateSchoolInput) {

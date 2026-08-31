@@ -717,6 +717,7 @@ export type Database = {
           geofence_radius_m: number
           id: string
           name: string
+          on_time_threshold_minutes: number
           timezone: string
         }
         Insert: {
@@ -727,6 +728,7 @@ export type Database = {
           geofence_radius_m?: number
           id?: string
           name: string
+          on_time_threshold_minutes?: number
           timezone?: string
         }
         Update: {
@@ -737,6 +739,7 @@ export type Database = {
           geofence_radius_m?: number
           id?: string
           name?: string
+          on_time_threshold_minutes?: number
           timezone?: string
         }
         Relationships: []
