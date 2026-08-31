@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildAlertsCsv, buildSmsCsv } from "./adminCsvExports";
-import type { AlertExportRow, SmsExportRow } from "./adminCsvExports";
+import { buildAlertsCsv, buildSmsCsv, buildStudentsCsv } from "./adminCsvExports";
+import type { AlertExportRow, SmsExportRow, StudentExportRow } from "./adminCsvExports";
 
 describe("buildAlertsCsv", () => {
   it("includes a header and one row per alert", () => {
@@ -67,5 +67,35 @@ describe("buildSmsCsv", () => {
 
   it("handles an empty list", () => {
     expect(buildSmsCsv([])).toBe("Recipient Phone,Body,Status,Created At");
+  });
+});
+
+describe("buildStudentsCsv", () => {
+  it("includes a header and one row per student", () => {
+    const rows: StudentExportRow[] = [
+      { first_name: "Jane", last_name: "Doe", grade: "5", route_name: "Route A", stop_name: "Elm St", guardians: "Priya Parent" }
+    ];
+    const csv = buildStudentsCsv(rows);
+    const lines = csv.split("\n");
+    expect(lines[0]).toBe("First Name,Last Name,Grade,Route,Stop,Guardians");
+    expect(lines[1]).toBe("Jane,Doe,5,Route A,Elm St,Priya Parent");
+  });
+
+  it("renders blank cells for missing grade/route/stop", () => {
+    const rows: StudentExportRow[] = [
+      { first_name: "Jane", last_name: "Doe", grade: null, route_name: null, stop_name: null, guardians: "" }
+    ];
+    expect(buildStudentsCsv(rows).split("\n")[1]).toBe("Jane,Doe,,,,");
+  });
+
+  it("escapes a comma in a route name", () => {
+    const rows: StudentExportRow[] = [
+      { first_name: "Jane", last_name: "Doe", grade: "5", route_name: "Route A, North Loop", stop_name: "Elm St", guardians: "Priya Parent" }
+    ];
+    expect(buildStudentsCsv(rows)).toContain('"Route A, North Loop"');
+  });
+
+  it("handles an empty list", () => {
+    expect(buildStudentsCsv([])).toBe("First Name,Last Name,Grade,Route,Stop,Guardians");
   });
 });

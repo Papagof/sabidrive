@@ -40,3 +40,21 @@ export function buildSmsCsv(rows: SmsExportRow[]): string {
   }
   return lines.join("\n");
 }
+
+export interface StudentExportRow {
+  first_name: string;
+  last_name: string;
+  grade: string | null;
+  route_name: string | null;
+  stop_name: string | null;
+  /** Already-joined guardian names, e.g. "Jane Doe; John Doe". */
+  guardians: string;
+}
+
+export function buildStudentsCsv(rows: StudentExportRow[]): string {
+  const lines: string[] = [csvRow("First Name", "Last Name", "Grade", "Route", "Stop", "Guardians")];
+  for (const r of rows) {
+    lines.push(csvRow(r.first_name, r.last_name, r.grade ?? "", r.route_name ?? "", r.stop_name ?? "", r.guardians));
+  }
+  return lines.join("\n");
+}

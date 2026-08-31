@@ -5,7 +5,16 @@ import { QRCodeSVG } from "qrcode.react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Banner, Button, Card } from "@sabidrive/ui";
-import { adminQueries, buildStudentImportPlan, parseCsv, userQueries, useSupabaseClient, type StudentImportPlan } from "@sabidrive/supabase";
+import {
+  adminQueries,
+  buildStudentImportPlan,
+  buildStudentsCsv,
+  parseCsv,
+  userQueries,
+  useSupabaseClient,
+  type StudentExportRow,
+  type StudentImportPlan
+} from "@sabidrive/supabase";
 import { InviteUserForm } from "@/components/InviteUserForm";
 
 const CSV_TEMPLATE = "first_name,last_name,grade,route,stop\nJane,Doe,5,Route A,Elm St\n";
@@ -272,6 +281,24 @@ export default function StudentsPage() {
     return true;
   });
 
+  function handleExportCsv() {
+    const rows: StudentExportRow[] = filteredStudents.map((s) => ({
+      first_name: s.first_name,
+      last_name: s.last_name,
+      grade: s.grade,
+      route_name: routes.find((r) => r.id === s.default_route_id)?.name ?? null,
+      stop_name: stops.find((st) => st.id === s.default_stop_id)?.name ?? null,
+      guardians: s.guardian_student_links.map((l) => l.profiles?.full_name).filter(Boolean).join("; ")
+    }));
+    const blob = new Blob([buildStudentsCsv(rows)], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sabidrive-students-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <AdminShell>
       <h1 className="mb-4 text-2xl font-semibold text-brand-800">Students</h1>
@@ -311,6 +338,9 @@ export default function StudentsPage() {
             </option>
           ))}
         </select>
+        <Button variant="secondary" size="md" onClick={handleExportCsv} disabled={filteredStudents.length === 0}>
+          Export CSV
+        </Button>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-4">
