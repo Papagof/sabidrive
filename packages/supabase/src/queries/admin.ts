@@ -123,6 +123,26 @@ export async function getSchoolAlerts(supabase: SabiDriveSupabaseClient, schoolI
   return data;
 }
 
+export async function getOpenAlerts(supabase: SabiDriveSupabaseClient, schoolId: string) {
+  const { data, error } = await supabase
+    .from("alerts")
+    .select("severity")
+    .eq("school_id", schoolId)
+    .is("resolved_at", null);
+  if (error) throw error;
+  return data as { severity: string }[];
+}
+
+export async function getTodaysAttendance(supabase: SabiDriveSupabaseClient, schoolId: string, todayISODate: string) {
+  const { data, error } = await supabase
+    .from("attendance_expectations")
+    .select("status, trips!inner(school_id, trip_date)")
+    .eq("trips.school_id", schoolId)
+    .eq("trips.trip_date", todayISODate);
+  if (error) throw error;
+  return data as unknown as { status: string }[];
+}
+
 export async function resolveAlert(supabase: SabiDriveSupabaseClient, alertId: string, resolvedBy: string, notes?: string) {
   const { error } = await supabase
     .from("alerts")
