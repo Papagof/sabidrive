@@ -89,7 +89,7 @@ export default function DriverHomePage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between print:hidden">
         <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
         <div className="flex items-center gap-3">
           <Link href="/account" className="text-sm text-brand-700">
@@ -107,7 +107,7 @@ export default function DriverHomePage() {
         </div>
       </div>
       {profile ? <NotificationOptIn userId={profile.id} /> : null}
-      <Card className="flex flex-col gap-3">
+      <Card className="flex flex-col gap-3 print:hidden">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium">{bus.label}</h2>
           <StatusPill label={bus.status} tone={statusToneMap[bus.status] ?? "neutral"} />
@@ -117,7 +117,15 @@ export default function DriverHomePage() {
 
       {manifest ? (
         <Card className="flex flex-col gap-3">
-          <h2 className="text-lg font-medium">Today&apos;s Route</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium">Today&apos;s Route</h2>
+            <Button variant="secondary" className="print:hidden" onClick={() => window.print()}>
+              Print manifest
+            </Button>
+          </div>
+          <p className="hidden text-sm text-neutral-600 print:block">
+            {bus.label} · {bus.routes?.name ?? "No route assigned"} · {new Date().toLocaleDateString()}
+          </p>
           {manifest.stops.length === 0 ? (
             <p className="text-sm text-neutral-500">No stops on this route yet.</p>
           ) : (
@@ -150,13 +158,13 @@ export default function DriverHomePage() {
         </Card>
       ) : null}
 
-      {error ? <p className="text-sm text-critical-600">{error}</p> : null}
+      {error ? <p className="text-sm text-critical-600 print:hidden">{error}</p> : null}
       {bus.current_trip_id ? (
-        <Button size="lg" onClick={() => router.push(`/driver/trip/${bus.current_trip_id}`)}>
+        <Button size="lg" className="print:hidden" onClick={() => router.push(`/driver/trip/${bus.current_trip_id}`)}>
           Resume trip
         </Button>
       ) : (
-        <Button size="lg" onClick={handleStartTrip} disabled={isStarting || !bus.routes}>
+        <Button size="lg" className="print:hidden" onClick={handleStartTrip} disabled={isStarting || !bus.routes}>
           {isStarting ? "Starting..." : "Start Trip"}
         </Button>
       )}
