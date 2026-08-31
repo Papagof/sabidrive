@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildTripHistory } from "./tripHistory";
-import type { TripHistoryAttendanceRow, TripHistoryCheckInRow } from "./tripHistory";
+import { buildTripHistory, buildTripHistoryCsv } from "./tripHistory";
+import type { TripHistoryAttendanceRow, TripHistoryCheckInRow, TripHistoryEntry } from "./tripHistory";
 
 describe("buildTripHistory", () => {
   const baseAttendance: TripHistoryAttendanceRow = {
@@ -62,5 +62,53 @@ describe("buildTripHistory", () => {
 
   it("handles an empty history", () => {
     expect(buildTripHistory([], [], "America/Chicago")).toEqual([]);
+  });
+});
+
+describe("buildTripHistoryCsv", () => {
+  const onTimeEntry: TripHistoryEntry = {
+    tripId: "t1",
+    date: "2026-01-15",
+    direction: "pickup",
+    tripStatus: "completed",
+    attendanceStatus: "boarded",
+    stopName: "Elm St",
+    checkedInAt: "2026-01-15T14:02:00Z",
+    onTimeStatus: "on_time",
+    deviationMinutes: 2
+  };
+
+  it("includes a header and one row with human-readable labels", () => {
+    const csv = buildTripHistoryCsv([onTimeEntry]);
+    const lines = csv.split("\n");
+    expect(lines[0]).toBe("Date,Direction,Trip Status,Attendance,Stop,Checked In At,On-Time Status,Deviation (min)");
+    expect(lines[1]).toBe("2026-01-15,Morning pickup,completed,boarded,Elm St,2026-01-15T14:02:00Z,On time,2");
+  });
+
+  it("renders a missed trip (no check-in) with blank checked-in/on-time fields, not a crash", () => {
+    const missed: TripHistoryEntry = {
+      tripId: "t2",
+      date: "2026-01-16",
+      direction: "dropoff",
+      tripStatus: "completed",
+      attendanceStatus: "missed",
+      stopName: null,
+      checkedInAt: null,
+      onTimeStatus: null,
+      deviationMinutes: null
+    };
+    const csv = buildTripHistoryCsv([missed]);
+    expect(csv.split("\n")[1]).toBe("2026-01-16,Afternoon drop-off,completed,missed,,,,");
+  });
+
+  it("escapes a comma in a stop name", () => {
+    const csv = buildTripHistoryCsv([{ ...onTimeEntry, stopName: "Elm St, North Loop" }]);
+    expect(csv).toContain('"Elm St, North Loop"');
+  });
+
+  it("handles an empty list", () => {
+    expect(buildTripHistoryCsv([])).toBe(
+      "Date,Direction,Trip Status,Attendance,Stop,Checked In At,On-Time Status,Deviation (min)"
+    );
   });
 });

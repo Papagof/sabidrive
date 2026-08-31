@@ -3,8 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Banner, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
-import { studentQueries, buildTripHistory, useSupabaseClient, type OnTimeStatus, type TripHistoryEntry } from "@sabidrive/supabase";
+import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import {
+  studentQueries,
+  buildTripHistory,
+  buildTripHistoryCsv,
+  useSupabaseClient,
+  type OnTimeStatus,
+  type TripHistoryEntry
+} from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 
 const DAYS_BACK = 30;
@@ -55,14 +62,31 @@ export default function TripHistoryPage() {
 
   if (isAuthLoading) return null;
 
+  function handleExportCsv() {
+    if (!entries) return;
+    const csv = buildTripHistoryCsv(entries);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sabidrive-trip-history-${studentId}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-8">
       <Link href={`/parent/${studentId}`} className="self-start text-sm text-brand-700">
         ← Back
       </Link>
-      <div>
-        <h1 className="text-2xl font-semibold text-brand-800">Trip History{studentName ? ` — ${studentName}` : ""}</h1>
-        <p className="text-sm text-neutral-500">Last {DAYS_BACK} days</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-brand-800">Trip History{studentName ? ` — ${studentName}` : ""}</h1>
+          <p className="text-sm text-neutral-500">Last {DAYS_BACK} days</p>
+        </div>
+        <Button variant="secondary" size="md" onClick={handleExportCsv} disabled={!entries || entries.length === 0}>
+          Export CSV
+        </Button>
       </div>
 
       {error ? (

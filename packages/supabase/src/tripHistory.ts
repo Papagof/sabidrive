@@ -9,6 +9,7 @@
  */
 
 import { zonedTimeToUtc } from "./reports";
+import { csvRow } from "./csv";
 
 export interface TripHistoryAttendanceRow {
   trip_id: string;
@@ -75,4 +76,37 @@ export function buildTripHistory(
   });
 
   return entries.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+const directionLabel: Record<TripHistoryEntry["direction"], string> = {
+  pickup: "Morning pickup",
+  dropoff: "Afternoon drop-off"
+};
+
+const onTimeLabel: Record<OnTimeStatus, string> = {
+  on_time: "On time",
+  late: "Late",
+  early: "Early"
+};
+
+/** Same flat, one-row-per-trip CSV shape/labels as the on-screen list -- reuses the shared csvRow/csvEscape every other export this session uses. */
+export function buildTripHistoryCsv(entries: TripHistoryEntry[]): string {
+  const lines: string[] = [
+    csvRow("Date", "Direction", "Trip Status", "Attendance", "Stop", "Checked In At", "On-Time Status", "Deviation (min)")
+  ];
+  for (const e of entries) {
+    lines.push(
+      csvRow(
+        e.date,
+        directionLabel[e.direction] ?? e.direction,
+        e.tripStatus,
+        e.attendanceStatus,
+        e.stopName ?? "",
+        e.checkedInAt ?? "",
+        e.onTimeStatus ? onTimeLabel[e.onTimeStatus] : "",
+        e.deviationMinutes != null ? Math.round(e.deviationMinutes) : ""
+      )
+    );
+  }
+  return lines.join("\n");
 }
