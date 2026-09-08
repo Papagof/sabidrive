@@ -891,6 +891,7 @@ export type Database = {
           id: string
           last_name: string
           photo_url: string | null
+          pickup_address: string | null
           qr_token: string
           school_id: string
         }
@@ -903,6 +904,7 @@ export type Database = {
           id?: string
           last_name: string
           photo_url?: string | null
+          pickup_address?: string | null
           qr_token?: string
           school_id: string
         }
@@ -915,6 +917,7 @@ export type Database = {
           id?: string
           last_name?: string
           photo_url?: string | null
+          pickup_address?: string | null
           qr_token?: string
           school_id?: string
         }
@@ -1217,6 +1220,10 @@ export type Database = {
         Returns: string
       }
       trigger_sos: { Args: { p_trip_id: string }; Returns: undefined }
+      update_student_pickup_address: {
+        Args: { p_address: string; p_student_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

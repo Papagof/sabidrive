@@ -27,6 +27,7 @@ interface Student {
   last_name: string;
   default_route_id: string | null;
   default_stop_id: string | null;
+  pickup_address: string | null;
   schools: { logo_url: string | null } | null;
 }
 
@@ -60,6 +61,9 @@ export default function StudentTrackingPage() {
   const [codeStatus, setCodeStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [codeCooldown, setCodeCooldown] = useState<"board" | "alight" | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
+  const [addressDraft, setAddressDraft] = useState("");
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [addressStatus, setAddressStatus] = useState<string | null>(null);
 
   const { current } = useTripLocation(tripId);
   const { isStale, secondsAgo } = useStaleness(current?.recordedAt ?? null);
@@ -70,11 +74,28 @@ export default function StudentTrackingPage() {
   useEffect(() => {
     supabase
       .from("students")
-      .select("id, first_name, last_name, default_route_id, default_stop_id, schools:school_id(logo_url)")
+      .select("id, first_name, last_name, default_route_id, default_stop_id, pickup_address, schools:school_id(logo_url)")
       .eq("id", studentId)
       .single()
-      .then(({ data }) => setStudent(data as Student | null));
+      .then(({ data }) => {
+        setStudent(data as Student | null);
+        setAddressDraft((data as Student | null)?.pickup_address ?? "");
+      });
   }, [supabase, studentId]);
+
+  async function handleSaveAddress() {
+    setIsSavingAddress(true);
+    setAddressStatus(null);
+    try {
+      await studentQueries.updateStudentPickupAddress(supabase, studentId, addressDraft.trim());
+      setAddressStatus("Saved.");
+      setStudent((prev) => (prev ? { ...prev, pickup_address: addressDraft.trim() } : prev));
+    } catch (err) {
+      setAddressStatus(err instanceof Error ? err.message : "Failed to save address");
+    } finally {
+      setIsSavingAddress(false);
+    }
+  }
 
   useEffect(() => {
     if (!student?.default_stop_id) return;
@@ -171,6 +192,23 @@ export default function StudentTrackingPage() {
         <SchoolLogo logoUrl={student.schools?.logo_url ?? null} />
         {student.first_name} {student.last_name}
       </h1>
+
+      <Card className="flex flex-col gap-2">
+        <p className="font-medium">Pickup/drop-off address</p>
+        <input
+          value={addressDraft}
+          onChange={(e) => setAddressDraft(e.target.value)}
+          placeholder="e.g. 123 Elm St, Lagos"
+          className="min-h-control rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+        />
+        <p className="text-xs text-neutral-500">
+          If this changes, update it here — the school will be notified so your child&apos;s stop can be adjusted.
+        </p>
+        <Button variant="secondary" size="md" disabled={isSavingAddress} onClick={handleSaveAddress} className="self-start">
+          {isSavingAddress ? "Saving..." : "Save address"}
+        </Button>
+        {addressStatus ? <p className="text-sm text-neutral-600">{addressStatus}</p> : null}
+      </Card>
 
       {tripId ? (
         <>

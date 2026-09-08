@@ -29,6 +29,7 @@ interface StudentRow {
   qr_token: string;
   default_route_id: string | null;
   default_stop_id: string | null;
+  pickup_address: string | null;
   guardian_student_links: { guardian_id: string; profiles: { full_name: string } | null }[];
 }
 
@@ -82,8 +83,11 @@ export default function StudentsPage() {
   const [editGrade, setEditGrade] = useState("");
   const [editRouteId, setEditRouteId] = useState("");
   const [editStopId, setEditStopId] = useState("");
+  const [editAddress, setEditAddress] = useState("");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  const [inviteAddress, setInviteAddress] = useState("");
 
   const [overrides, setOverrides] = useState<PickupOverrideRow[]>([]);
   const [overrideName, setOverrideName] = useState("");
@@ -214,12 +218,14 @@ export default function StudentsPage() {
     setLinkEmail("");
     setLinkStatus(null);
     setEditError(null);
+    setInviteAddress("");
     const student = students.find((s) => s.id === studentId);
     setEditFirstName(student?.first_name ?? "");
     setEditLastName(student?.last_name ?? "");
     setEditGrade(student?.grade ?? "");
     setEditRouteId(student?.default_route_id ?? "");
     setEditStopId(student?.default_stop_id ?? "");
+    setEditAddress(student?.pickup_address ?? "");
     const rows = await adminQueries.getPickupOverrides(supabase, studentId);
     setOverrides(rows as unknown as PickupOverrideRow[]);
   }
@@ -233,7 +239,8 @@ export default function StudentsPage() {
         last_name: editLastName,
         grade: editGrade || null,
         default_route_id: editRouteId || null,
-        default_stop_id: editStopId || null
+        default_stop_id: editStopId || null,
+        pickup_address: editAddress || null
       });
       await refetch();
     } catch (err) {
@@ -276,6 +283,11 @@ export default function StudentsPage() {
   async function handleGuardianInvited(studentId: string, userId: string) {
     setIsInvitingGuardian(false);
     await adminQueries.linkGuardianToStudent(supabase, userId, studentId);
+    if (inviteAddress.trim()) {
+      await adminQueries.updateStudent(supabase, studentId, { pickup_address: inviteAddress.trim() });
+      setEditAddress(inviteAddress.trim());
+      setInviteAddress("");
+    }
     await refetch();
   }
 
@@ -550,6 +562,14 @@ export default function StudentsPage() {
                           </option>
                         ))}
                       </select>
+                    </div>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <input
+                        value={editAddress}
+                        onChange={(e) => setEditAddress(e.target.value)}
+                        placeholder="Pickup/drop-off address"
+                        className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                      />
                       <Button disabled={isSavingEdit} onClick={() => handleSaveEdit(s.id)}>
                         {isSavingEdit ? "Saving..." : "Save changes"}
                       </Button>
@@ -587,11 +607,19 @@ export default function StudentsPage() {
                       {!isInvitingGuardian ? <Button onClick={() => handleLinkGuardian(s.id)}>Link</Button> : null}
                     </div>
                     {isInvitingGuardian ? (
-                      <InviteUserForm
-                        role="parent"
-                        onCancel={() => setIsInvitingGuardian(false)}
-                        onInvited={(user) => handleGuardianInvited(s.id, user.userId)}
-                      />
+                      <div className="flex flex-col gap-2">
+                        <input
+                          value={inviteAddress}
+                          onChange={(e) => setInviteAddress(e.target.value)}
+                          placeholder="Pickup/drop-off address (optional)"
+                          className="min-h-control rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                        />
+                        <InviteUserForm
+                          role="parent"
+                          onCancel={() => setIsInvitingGuardian(false)}
+                          onInvited={(user) => handleGuardianInvited(s.id, user.userId)}
+                        />
+                      </div>
                     ) : null}
 
                     <div className="flex flex-col gap-1">

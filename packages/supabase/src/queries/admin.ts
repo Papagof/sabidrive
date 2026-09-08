@@ -293,6 +293,7 @@ export interface UpdateStudentInput {
   grade?: string | null;
   default_route_id?: string | null;
   default_stop_id?: string | null;
+  pickup_address?: string | null;
 }
 
 export async function updateStudent(supabase: SabiDriveSupabaseClient, studentId: string, input: UpdateStudentInput) {
