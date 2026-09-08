@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation";
 import { AnimatedBusesBackdrop, Banner, Button, Card, PasswordInput } from "@sabidrive/ui";
 import { useSession, useSupabaseClient, userQueries } from "@sabidrive/supabase";
 
+// Admin is a genuinely separate app/origin (separate Vercel deployment,
+// separate localStorage) -- signing in here can't make admin.sabidrive.com
+// see a session for free. An admin-role sign-in instead gets bridged there
+// via a URL fragment carrying the just-issued session tokens (see
+// apps/admin/src/app/auth-bridge/page.tsx), the same "establish a session
+// from a magic-link-style URL" technique this app already uses for invite
+// and password-reset links. Hardcoded to the .vercel.app URL, not
+// admin.sabidrive.com, matching the same tradeoff already accepted
+// elsewhere in this codebase (admin's own FAMILY_APP_URL constant) --
+// correct regardless of whether the custom domain's DNS is attached yet.
+const ADMIN_APP_URL = "https://sabidrive-admin.vercel.app";
+
 export default function LoginPage() {
   const supabase = useSupabaseClient();
   const router = useRouter();
@@ -20,7 +32,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && session && profile) {
-      router.replace(profile.role === "driver" ? "/driver" : "/parent");
+      if (profile.role === "admin") {
+        window.location.href = `${ADMIN_APP_URL}/auth-bridge#access_token=${session.access_token}&refresh_token=${session.refresh_token}`;
+      } else {
+        router.replace(profile.role === "driver" ? "/driver" : "/parent");
+      }
     }
   }, [isLoading, session, profile, router]);
 
