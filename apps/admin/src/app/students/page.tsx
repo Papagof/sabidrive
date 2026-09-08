@@ -77,6 +77,14 @@ export default function StudentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
+  const [editGrade, setEditGrade] = useState("");
+  const [editRouteId, setEditRouteId] = useState("");
+  const [editStopId, setEditStopId] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   const [overrides, setOverrides] = useState<PickupOverrideRow[]>([]);
   const [overrideName, setOverrideName] = useState("");
   const [overrideRelationship, setOverrideRelationship] = useState("");
@@ -205,8 +213,34 @@ export default function StudentsPage() {
     setIsInvitingGuardian(false);
     setLinkEmail("");
     setLinkStatus(null);
+    setEditError(null);
+    const student = students.find((s) => s.id === studentId);
+    setEditFirstName(student?.first_name ?? "");
+    setEditLastName(student?.last_name ?? "");
+    setEditGrade(student?.grade ?? "");
+    setEditRouteId(student?.default_route_id ?? "");
+    setEditStopId(student?.default_stop_id ?? "");
     const rows = await adminQueries.getPickupOverrides(supabase, studentId);
     setOverrides(rows as unknown as PickupOverrideRow[]);
+  }
+
+  async function handleSaveEdit(studentId: string) {
+    setIsSavingEdit(true);
+    setEditError(null);
+    try {
+      await adminQueries.updateStudent(supabase, studentId, {
+        first_name: editFirstName,
+        last_name: editLastName,
+        grade: editGrade || null,
+        default_route_id: editRouteId || null,
+        default_stop_id: editStopId || null
+      });
+      await refetch();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Failed to save changes");
+    } finally {
+      setIsSavingEdit(false);
+    }
   }
 
   async function handleLinkGuardianByEmail(studentId: string) {
@@ -263,6 +297,7 @@ export default function StudentsPage() {
 
   const stopsForRoute = stops.filter((s) => s.route_id === routeId);
   const stopsForFilterRoute = stops.filter((s) => s.route_id === routeFilter);
+  const stopsForEditRoute = stops.filter((s) => s.route_id === editRouteId);
 
   const query = searchQuery.trim().toLowerCase();
   const hasActiveFilter = query.length > 0 || routeFilter.length > 0 || stopFilter.length > 0;
@@ -463,7 +498,66 @@ export default function StudentsPage() {
                 </Button>
               </div>
               {expandedId === s.id ? (
-                <div className="mt-3 flex flex-col gap-3 border-t border-neutral-100 pt-3 sm:flex-row sm:items-start">
+                <div className="mt-3 flex flex-col gap-3 border-t border-neutral-100 pt-3">
+                  <div className="rounded-xl border border-neutral-200 p-3">
+                    <p className="mb-2 text-sm font-medium">Edit details</p>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        value={editFirstName}
+                        onChange={(e) => setEditFirstName(e.target.value)}
+                        placeholder="First name"
+                        className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                      />
+                      <input
+                        value={editLastName}
+                        onChange={(e) => setEditLastName(e.target.value)}
+                        placeholder="Last name"
+                        className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                      />
+                      <input
+                        value={editGrade}
+                        onChange={(e) => setEditGrade(e.target.value)}
+                        placeholder="Grade"
+                        className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <select
+                        value={editRouteId}
+                        onChange={(e) => {
+                          setEditRouteId(e.target.value);
+                          setEditStopId("");
+                        }}
+                        className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                      >
+                        <option value="">No route</option>
+                        {routes.map((r) => (
+                          <option key={r.id} value={r.id}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={editStopId}
+                        onChange={(e) => setEditStopId(e.target.value)}
+                        disabled={!editRouteId}
+                        className="min-h-control flex-1 rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+                      >
+                        <option value="">No stop</option>
+                        {stopsForEditRoute.map((st) => (
+                          <option key={st.id} value={st.id}>
+                            {st.name}
+                          </option>
+                        ))}
+                      </select>
+                      <Button disabled={isSavingEdit} onClick={() => handleSaveEdit(s.id)}>
+                        {isSavingEdit ? "Saving..." : "Save changes"}
+                      </Button>
+                    </div>
+                    {editError ? <p className="mt-2 text-sm text-critical-600">{editError}</p> : null}
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                   <div className="flex flex-col items-center gap-1">
                     <QRCodeSVG value={s.qr_token} size={96} />
                     <span className="text-xs text-neutral-500">Boarding QR code</span>
@@ -558,6 +652,7 @@ export default function StudentsPage() {
                         <Button onClick={() => handleAddOverride(s.id)}>Add</Button>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </div>
               ) : null}

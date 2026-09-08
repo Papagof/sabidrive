@@ -287,6 +287,19 @@ export async function createStudent(supabase: SabiDriveSupabaseClient, input: Cr
   return data;
 }
 
+export interface UpdateStudentInput {
+  first_name?: string;
+  last_name?: string;
+  grade?: string | null;
+  default_route_id?: string | null;
+  default_stop_id?: string | null;
+}
+
+export async function updateStudent(supabase: SabiDriveSupabaseClient, studentId: string, input: UpdateStudentInput) {
+  const { error } = await supabase.from("students").update(input).eq("id", studentId);
+  if (error) throw error;
+}
+
 /** Bulk CSV import -- students_admin_crud RLS is a plain row-level policy with no batch-size restriction, so a multi-row insert works as-is. */
 export async function createStudentsBulk(supabase: SabiDriveSupabaseClient, inputs: CreateStudentInput[]) {
   const { data, error } = await supabase.from("students").insert(inputs).select();
