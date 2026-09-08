@@ -201,6 +201,12 @@ export default function LoginPage() {
           </button>
         ) : null}
       </Card>
+      <p className="mt-4 text-center text-sm text-neutral-500">
+        New school?{" "}
+        <a href={`${ADMIN_APP_URL}/signup`} className="text-brand-700">
+          Create an account
+        </a>
+      </p>
     </main>
   );
 }
