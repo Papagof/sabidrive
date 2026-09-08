@@ -7,6 +7,7 @@ import { Card } from "@sabidrive/ui";
 import { studentQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
+import { SchoolLogo } from "@/components/SchoolLogo";
 
 interface StudentRow {
   id: string;
@@ -14,7 +15,7 @@ interface StudentRow {
   last_name: string;
   photo_url: string | null;
   school_id: string;
-  schools: { name: string } | null;
+  schools: { name: string; logo_url: string | null } | null;
 }
 
 export default function ParentHomePage() {
@@ -51,7 +52,10 @@ export default function ParentHomePage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
+        <div className="flex items-center gap-2">
+          {!isMultiSchool ? <SchoolLogo logoUrl={students[0]?.schools?.logo_url ?? null} /> : null}
+          <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
+        </div>
         <div className="flex items-center gap-3">
           <Link href="/parent/announcements" className="text-sm text-brand-700">
             Announcements

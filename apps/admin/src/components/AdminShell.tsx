@@ -25,11 +25,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { profile } = useSession();
   const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile?.school_id) return;
     adminQueries.getSchool(supabase, profile.school_id).then((school) => {
-      setSchoolName((school as unknown as { name: string }).name);
+      const s = school as unknown as { name: string; logo_url: string | null };
+      setSchoolName(s.name);
+      setLogoUrl(s.logo_url);
     });
   }, [supabase, profile?.school_id]);
 
@@ -37,7 +40,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <span className="text-lg font-bold text-neutral-800">{schoolName ?? "Admin"}</span>
+          <span className="flex items-center gap-2 text-lg font-bold text-neutral-800">
+            {logoUrl ? <img src={logoUrl} alt="" className="h-8 w-8 rounded object-contain" /> : null}
+            {schoolName ?? "Admin"}
+          </span>
           <nav className="flex gap-1">
             {NAV_ITEMS.map((item) => (
               <Link

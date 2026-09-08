@@ -761,6 +761,7 @@ export type Database = {
           geofence_lng: number | null
           geofence_radius_m: number
           id: string
+          logo_url: string | null
           name: string
           on_time_threshold_minutes: number
           timezone: string
@@ -772,6 +773,7 @@ export type Database = {
           geofence_lng?: number | null
           geofence_radius_m?: number
           id?: string
+          logo_url?: string | null
           name: string
           on_time_threshold_minutes?: number
           timezone?: string
@@ -783,6 +785,7 @@ export type Database = {
           geofence_lng?: number | null
           geofence_radius_m?: number
           id?: string
+          logo_url?: string | null
           name?: string
           on_time_threshold_minutes?: number
           timezone?: string

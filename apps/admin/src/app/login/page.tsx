@@ -103,7 +103,7 @@ export default function LoginPage() {
     <main className="relative mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <AnimatedBusesBackdrop />
       <h1 className="mb-6 rounded-xl bg-white/70 px-3 py-2 text-neutral-600 backdrop-blur-sm">
-        Sign in to manage routes, buses, and attendance.
+        Real-time visibility and safety for every child&apos;s school bus ride.
       </h1>
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

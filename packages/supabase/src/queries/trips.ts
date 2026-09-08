@@ -42,7 +42,7 @@ export async function checkIn(
 export async function getDriverBus(supabase: SabiDriveSupabaseClient, driverId: string) {
   const { data, error } = await supabase
     .from("buses")
-    .select("*, routes:default_route_id(id, name, polyline)")
+    .select("*, routes:default_route_id(id, name, polyline), schools:school_id(logo_url)")
     .or(`driver_id.eq.${driverId},attendant_id.eq.${driverId}`)
     .maybeSingle();
   if (error) throw error;

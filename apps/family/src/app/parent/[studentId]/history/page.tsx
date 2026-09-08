@@ -13,6 +13,7 @@ import {
   type TripHistoryEntry
 } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
+import { SchoolLogo } from "@/components/SchoolLogo";
 
 const DAYS_BACK = 30;
 
@@ -39,16 +40,20 @@ export default function TripHistoryPage() {
   const supabase = useSupabaseClient();
 
   const [studentName, setStudentName] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [entries, setEntries] = useState<TripHistoryEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase
       .from("students")
-      .select("first_name, last_name")
+      .select("first_name, last_name, schools:school_id(logo_url)")
       .eq("id", studentId)
       .single()
-      .then(({ data }) => setStudentName(data ? `${data.first_name} ${data.last_name}` : null));
+      .then(({ data }) => {
+        setStudentName(data ? `${data.first_name} ${data.last_name}` : null);
+        setLogoUrl((data as unknown as { schools: { logo_url: string | null } | null } | null)?.schools?.logo_url ?? null);
+      });
   }, [supabase, studentId]);
 
   useEffect(() => {
@@ -81,7 +86,10 @@ export default function TripHistoryPage() {
       </Link>
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-brand-800">Trip History{studentName ? ` — ${studentName}` : ""}</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-semibold text-brand-800">
+            <SchoolLogo logoUrl={logoUrl} />
+            Trip History{studentName ? ` — ${studentName}` : ""}
+          </h1>
           <p className="text-sm text-neutral-500">Last {DAYS_BACK} days</p>
         </div>
         <Button variant="secondary" size="md" onClick={handleExportCsv} disabled={!entries || entries.length === 0}>

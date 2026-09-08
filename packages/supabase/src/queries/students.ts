@@ -20,7 +20,7 @@ export async function getGuardianStudents(supabase: SabiDriveSupabaseClient, gua
   const { data, error } = await supabase
     .from("guardian_student_links")
     .select(
-      "students(id, first_name, last_name, photo_url, default_route_id, default_stop_id, qr_token, school_id, schools(name))"
+      "students(id, first_name, last_name, photo_url, default_route_id, default_stop_id, qr_token, school_id, schools(name, logo_url))"
     )
     .eq("guardian_id", guardianId);
   if (error) throw error;

@@ -356,6 +356,7 @@ export interface UpdateSchoolInput {
   geofence_lng?: number | null;
   geofence_radius_m?: number;
   on_time_threshold_minutes?: number;
+  logo_url?: string | null;
 }
 
 export async function updateSchool(supabase: SabiDriveSupabaseClient, schoolId: string, input: UpdateSchoolInput) {
@@ -484,4 +485,36 @@ export async function getOnTimeCheckInsInRange(supabase: SabiDriveSupabaseClient
       route_name: r.trips!.routes?.name ?? null,
       scheduled_time: r.stops?.scheduled_time ?? null
     }));
+}
+
+export interface DeveloperSchoolRow {
+  id: string;
+  name: string;
+  address: string | null;
+  timezone: string;
+  created_at: string;
+  studentCount: number;
+  busCount: number;
+}
+
+/**
+ * Calls the admin app's /api/developer/schools -- a cross-school view gated
+ * by a server-side email allowlist (DEVELOPER_EMAILS), not RLS/role, since
+ * this deliberately isn't a role any table's RLS policy knows about. Throws
+ * with the route's own message on a 401/403 rather than returning a typed
+ * "not authorized" result, so a caller who isn't allowlisted sees why.
+ */
+export async function getDeveloperSchools(supabase: SabiDriveSupabaseClient): Promise<DeveloperSchoolRow[]> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Not signed in");
+
+  const response = await fetch("/api/developer/schools", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const body = await response.json();
+  if (!response.ok) {
+    throw new Error(body.error ?? "Request failed");
+  }
+  return body.schools as DeveloperSchoolRow[];
 }

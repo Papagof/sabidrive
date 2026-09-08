@@ -17,6 +17,7 @@ import {
   useTripMessages
 } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
+import { SchoolLogo } from "@/components/SchoolLogo";
 
 const TripMap = dynamic(() => import("@sabidrive/ui").then((m) => m.TripMap), { ssr: false });
 
@@ -26,6 +27,7 @@ interface Student {
   last_name: string;
   default_route_id: string | null;
   default_stop_id: string | null;
+  schools: { logo_url: string | null } | null;
 }
 
 interface Stop {
@@ -68,7 +70,7 @@ export default function StudentTrackingPage() {
   useEffect(() => {
     supabase
       .from("students")
-      .select("id, first_name, last_name, default_route_id, default_stop_id")
+      .select("id, first_name, last_name, default_route_id, default_stop_id, schools:school_id(logo_url)")
       .eq("id", studentId)
       .single()
       .then(({ data }) => setStudent(data as Student | null));
@@ -165,7 +167,8 @@ export default function StudentTrackingPage() {
           Trip History
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold text-brand-800">
+      <h1 className="flex items-center gap-2 text-2xl font-semibold text-brand-800">
+        <SchoolLogo logoUrl={student.schools?.logo_url ?? null} />
         {student.first_name} {student.last_name}
       </h1>
 

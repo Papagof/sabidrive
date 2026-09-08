@@ -3,8 +3,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Banner, Button, Card, StatusPill } from "@sabidrive/ui";
-import { useSupabaseClient, userQueries } from "@sabidrive/supabase";
+import { studentQueries, useSupabaseClient, userQueries } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
+import { SchoolLogo } from "@/components/SchoolLogo";
 
 type Step = "idle" | "entering_phone" | "code_sent";
 
@@ -37,12 +38,34 @@ export default function AccountPage() {
 
   const [notificationPrefs, setNotificationPrefs] = useState<Record<string, boolean>>({});
   const [notificationError, setNotificationError] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setEmailConfirmed(Boolean(data.user?.email_confirmed_at));
     });
   }, [supabase]);
+
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.role === "driver") {
+      if (!profile.school_id) return;
+      supabase
+        .from("schools")
+        .select("logo_url")
+        .eq("id", profile.school_id)
+        .single()
+        .then(({ data }) => setLogoUrl((data as { logo_url: string | null } | null)?.logo_url ?? null));
+    } else {
+      // A guardian's children can span more than one school -- only show a
+      // logo when they all share one, same fallback as the parent home page.
+      studentQueries.getGuardianStudents(supabase, profile.id).then((data) => {
+        const rows = data as unknown as { school_id: string; schools: { logo_url: string | null } | null }[];
+        const schoolIds = Array.from(new Set(rows.map((r) => r.school_id)));
+        setLogoUrl(schoolIds.length === 1 ? (rows[0]?.schools?.logo_url ?? null) : null);
+      });
+    }
+  }, [supabase, profile]);
 
   useEffect(() => {
     if (!profile) return;
@@ -107,7 +130,10 @@ export default function AccountPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-brand-800">Account</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-semibold text-brand-800">
+          <SchoolLogo logoUrl={logoUrl} />
+          Account
+        </h1>
         <Link href={profile?.role === "driver" ? "/driver" : "/parent"} className="text-sm text-brand-700">
           Back
         </Link>

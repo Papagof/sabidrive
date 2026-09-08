@@ -33,8 +33,21 @@ export function useSession(): SessionState {
     let isMounted = true;
 
     async function loadProfile(userId: string) {
-      const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
-      if (isMounted) setProfile((data as Profile) ?? null);
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+      if (!isMounted) return;
+      if (error?.code === "PGRST116") {
+        // The session's JWT is still locally valid (signature-based, not
+        // re-checked against the DB), but the account behind it is gone --
+        // deleted server-side, e.g. an admin wiping accounts. Sign out to
+        // clear the stale session instead of leaving every session-gated
+        // page (RootPage, useRequireAdmin/useRequireRole) in a broken
+        // half-signed-in state where `session` is truthy but `profile`
+        // never loads. onAuthStateChange below picks up the resulting
+        // signed-out state and clears session/profile for us.
+        await supabase.auth.signOut();
+        return;
+      }
+      setProfile((data as Profile) ?? null);
     }
 
     supabase.auth.getSession().then(({ data }) => {

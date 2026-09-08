@@ -7,6 +7,7 @@ import { Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
 import { buildRouteManifest, tripQueries, useSupabaseClient, type RouteManifest } from "@sabidrive/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
+import { SchoolLogo } from "@/components/SchoolLogo";
 
 interface DriverBus {
   id: string;
@@ -14,6 +15,7 @@ interface DriverBus {
   status: string;
   current_trip_id: string | null;
   routes: { id: string; name: string } | null;
+  schools: { logo_url: string | null } | null;
 }
 
 export default function DriverHomePage() {
@@ -90,7 +92,10 @@ export default function DriverHomePage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
       <div className="flex items-center justify-between print:hidden">
-        <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
+        <div className="flex items-center gap-2">
+          <SchoolLogo logoUrl={bus.schools?.logo_url ?? null} />
+          <h1 className="text-2xl font-semibold text-brand-800">Hi, {profile?.full_name}</h1>
+        </div>
         <div className="flex items-center gap-3">
           <Link href="/account" className="text-sm text-brand-700">
             Account

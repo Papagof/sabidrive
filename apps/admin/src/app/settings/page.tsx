@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
 import { Button, Card } from "@sabidrive/ui";
@@ -16,7 +16,10 @@ interface SchoolRow {
   geofence_lng: number | null;
   geofence_radius_m: number;
   on_time_threshold_minutes: number;
+  logo_url: string | null;
 }
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
 export default function SettingsPage() {
   const { profile, isLoading } = useRequireAdmin();
@@ -32,6 +35,9 @@ export default function SettingsPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!profile?.school_id) return;
@@ -45,10 +51,41 @@ export default function SettingsPage() {
       setGeofenceLng(s.geofence_lng != null ? String(s.geofence_lng) : "");
       setGeofenceRadius(String(s.geofence_radius_m));
       setOnTimeThreshold(String(s.on_time_threshold_minutes));
+      setLogoUrl(s.logo_url);
     });
   }, [supabase, profile?.school_id]);
 
   if (isLoading) return null;
+
+  async function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !school) return;
+    setLogoError(null);
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Please choose an image file.");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setLogoError("Logo must be under 2MB.");
+      return;
+    }
+    setIsUploadingLogo(true);
+    try {
+      const path = `${school.id}/logo`;
+      const { error: uploadError } = await supabase.storage
+        .from("school-logos")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from("school-logos").getPublicUrl(path);
+      await adminQueries.updateSchool(supabase, school.id, { logo_url: data.publicUrl });
+      setLogoUrl(data.publicUrl);
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "Failed to upload logo");
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  }
 
   async function handleUseCurrentLocation() {
     setIsLocating(true);
@@ -100,6 +137,26 @@ export default function SettingsPage() {
                 onChange={(e) => setName(e.target.value)}
                 className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"
               />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm font-medium text-neutral-700">School logo</span>
+              <div className="flex items-center gap-3">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="" className="h-12 w-12 rounded object-contain" />
+                ) : (
+                  <span className="text-sm text-neutral-500">No logo yet</span>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={isUploadingLogo}
+                  onChange={handleLogoChange}
+                  className="text-sm"
+                />
+              </div>
+              {isUploadingLogo ? <span className="text-xs text-neutral-500">Uploading…</span> : null}
+              {logoError ? <span className="text-sm text-critical-600">{logoError}</span> : null}
+              <span className="text-xs text-neutral-500">Shown across your school&apos;s pages in both apps. Under 2MB.</span>
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium text-neutral-700">Address</span>
