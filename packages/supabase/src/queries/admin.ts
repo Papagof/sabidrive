@@ -183,6 +183,16 @@ export async function createRoute(supabase: SabiDriveSupabaseClient, input: Crea
   return data as unknown as CreateRouteInput & { id: string };
 }
 
+export interface UpdateRouteInput {
+  name?: string;
+  direction?: "pickup" | "dropoff";
+}
+
+export async function updateRoute(supabase: SabiDriveSupabaseClient, routeId: string, input: UpdateRouteInput) {
+  const { error } = await supabase.from("routes").update(input).eq("id", routeId);
+  if (error) throw error;
+}
+
 export interface CreateStopInput {
   route_id: string;
   school_id: string;
@@ -191,12 +201,31 @@ export interface CreateStopInput {
   lat: number;
   lng: number;
   radius_m?: number;
+  scheduled_time?: string | null;
 }
 
 export async function createStop(supabase: SabiDriveSupabaseClient, input: CreateStopInput) {
   const { data, error } = await supabase.from("stops").insert(input).select().single();
   if (error) throw error;
   return data;
+}
+
+export interface UpdateStopInput {
+  name?: string;
+  lat?: number;
+  lng?: number;
+  scheduled_time?: string | null;
+  sequence_no?: number;
+}
+
+export async function updateStop(supabase: SabiDriveSupabaseClient, stopId: string, input: UpdateStopInput) {
+  const { error } = await supabase.from("stops").update(input).eq("id", stopId);
+  if (error) throw error;
+}
+
+export async function deleteStop(supabase: SabiDriveSupabaseClient, stopId: string) {
+  const { error } = await supabase.from("stops").delete().eq("id", stopId);
+  if (error) throw error;
 }
 
 export interface CreateBusInput {
