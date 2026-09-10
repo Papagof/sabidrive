@@ -73,6 +73,15 @@ describe("summarizeAttendance", () => {
     expect(summary.boardedPct).toBe(0);
     expect(summary.missedPct).toBe(0);
   });
+
+  it("counts 'alighted' (a dropoff trip's fulfilled check-in) alongside 'boarded'", () => {
+    const rows: AttendanceRow[] = [{ status: "boarded" }, { status: "alighted" }, { status: "alighted" }, { status: "pending" }];
+    const summary = summarizeAttendance(rows);
+    expect(summary.total).toBe(4);
+    expect(summary.boarded).toBe(3);
+    expect(summary.pending).toBe(1);
+    expect(summary.boardedPct).toBeCloseTo(75, 6);
+  });
 });
 
 describe("summarizeAlerts", () => {

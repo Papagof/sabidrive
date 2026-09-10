@@ -27,6 +27,11 @@ export default function DriverHomePage() {
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<RouteManifest | null>(null);
+  // Defaults by time of day (a simple heuristic, not a per-school schedule)
+  // but stays fully driver-overridable before a trip starts.
+  const [direction, setDirection] = useState<"pickup" | "dropoff">(() =>
+    new Date().getHours() < 12 ? "pickup" : "dropoff"
+  );
 
   useEffect(() => {
     if (!profile) return;
@@ -51,7 +56,7 @@ export default function DriverHomePage() {
     setIsStarting(true);
     setError(null);
     try {
-      const tripId = await tripQueries.startTrip(supabase, bus.id, "pickup");
+      const tripId = await tripQueries.startTrip(supabase, bus.id, direction);
       router.push(`/driver/trip/${tripId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start trip");
@@ -169,9 +174,27 @@ export default function DriverHomePage() {
           Resume trip
         </Button>
       ) : (
-        <Button size="lg" className="print:hidden" onClick={handleStartTrip} disabled={isStarting || !bus.routes}>
-          {isStarting ? "Starting..." : "Start Trip"}
-        </Button>
+        <div className="flex flex-col gap-2 print:hidden">
+          <div className="flex gap-2">
+            <Button
+              variant={direction === "pickup" ? "primary" : "secondary"}
+              className="flex-1"
+              onClick={() => setDirection("pickup")}
+            >
+              Pickup
+            </Button>
+            <Button
+              variant={direction === "dropoff" ? "primary" : "secondary"}
+              className="flex-1"
+              onClick={() => setDirection("dropoff")}
+            >
+              Drop-off
+            </Button>
+          </div>
+          <Button size="lg" onClick={handleStartTrip} disabled={isStarting || !bus.routes}>
+            {isStarting ? "Starting..." : direction === "pickup" ? "Start Pickup Trip" : "Start Drop-off Trip"}
+          </Button>
+        </div>
       )}
     </main>
   );

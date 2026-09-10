@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
 import { Button, Banner, Card } from "@sabidrive/ui";
@@ -20,6 +20,20 @@ export default function ScanPage() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [smsCode, setSmsCode] = useState("");
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+
+  useEffect(() => {
+    // A dropoff trip's default scan is a drop-off, not a boarding -- still
+    // fully overridable via the toggle below.
+    void supabase
+      .from("trips")
+      .select("direction")
+      .eq("id", tripId)
+      .single()
+      .then(({ data }) => {
+        if (data?.direction === "dropoff") setEventType("alight");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId]);
 
   async function submitCheckIn(qrToken: string) {
     setIsPaused(true);

@@ -25,6 +25,7 @@ export const statusToneMap: Record<string, StatusTone> = {
   cancelled: "neutral",
   pending: "neutral",
   boarded: "positive",
+  alighted: "positive",
   missed: "caution",
   excused: "neutral",
   info: "info",

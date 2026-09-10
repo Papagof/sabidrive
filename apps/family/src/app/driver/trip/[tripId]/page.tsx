@@ -34,6 +34,7 @@ export default function DriverTripPage() {
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
+  const [direction, setDirection] = useState<"pickup" | "dropoff">("pickup");
   const [isEnding, setIsEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sosStep, setSosStep] = useState<"idle" | "confirm" | "sending" | "sent">("idle");
@@ -46,6 +47,17 @@ export default function DriverTripPage() {
     const data = await tripQueries.getAttendanceForTrip(supabase, tripId);
     setAttendance(data as unknown as AttendanceRow[]);
   }
+
+  useEffect(() => {
+    void supabase
+      .from("trips")
+      .select("direction")
+      .eq("id", tripId)
+      .single()
+      .then(({ data }) => {
+        if (data?.direction) setDirection(data.direction as "pickup" | "dropoff");
+      });
+  }, [supabase, tripId]);
 
   useEffect(() => {
     void refetch();
@@ -96,13 +108,17 @@ export default function DriverTripPage() {
 
   if (isAuthLoading) return null;
 
-  const boardedCount = attendance.filter((a) => a.status === "boarded").length;
+  const completedStatus = direction === "pickup" ? "boarded" : "alighted";
+  const completedCount = attendance.filter((a) => a.status === completedStatus).length;
+  const completedLabel = direction === "pickup" ? "boarded" : "dropped off";
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">
-      <h1 className="text-2xl font-semibold text-brand-800">Trip in progress</h1>
+      <h1 className="text-2xl font-semibold text-brand-800">
+        {direction === "pickup" ? "Pickup trip in progress" : "Drop-off trip in progress"}
+      </h1>
       <p className="text-neutral-600">
-        {boardedCount} of {attendance.length} students boarded
+        {completedCount} of {attendance.length} students {completedLabel}
       </p>
 
       {sosStep === "sent" ? (

@@ -21,6 +21,7 @@ interface AttendanceRow {
 interface TripInfo {
   id: string;
   status: string;
+  direction: "pickup" | "dropoff";
   buses: { label: string } | null;
 }
 
@@ -47,7 +48,7 @@ export default function AttendancePage() {
     setAttendance(data as unknown as AttendanceRow[]);
     const { data: tripData } = await supabase
       .from("trips")
-      .select("id, status, buses!trips_bus_id_fkey(label)")
+      .select("id, status, direction, buses!trips_bus_id_fkey(label)")
       .eq("id", tripId)
       .single();
     setTrip(tripData as unknown as TripInfo | null);
@@ -69,7 +70,8 @@ export default function AttendancePage() {
 
   if (isLoading) return null;
 
-  const boarded = attendance.filter((a) => a.status === "boarded").length;
+  const isDropoff = trip?.direction === "dropoff";
+  const completed = attendance.filter((a) => a.status === (isDropoff ? "alighted" : "boarded")).length;
   const missed = attendance.filter((a) => a.status === "missed").length;
   const pending = attendance.filter((a) => a.status === "pending").length;
 
@@ -101,7 +103,7 @@ export default function AttendancePage() {
     <AdminShell>
       <h1 className="mb-1 text-2xl font-semibold text-brand-800">{trip?.buses?.label ?? "Trip"}</h1>
       <p className="mb-4 text-neutral-600">
-        {boarded} boarded · {pending} pending · {missed} missed
+        {completed} {isDropoff ? "dropped off" : "boarded"} · {pending} pending · {missed} missed
       </p>
 
       <div className="mb-4 h-72 overflow-hidden rounded-2xl border border-neutral-200">

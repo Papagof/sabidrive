@@ -64,7 +64,9 @@ export interface AttendanceSummary {
 
 export function summarizeAttendance(rows: AttendanceRow[]): AttendanceSummary {
   const total = rows.length;
-  const boarded = rows.filter((r) => r.status === "boarded").length;
+  // 'alighted' (a dropoff-trip check-in) fulfills the expectation exactly
+  // like 'boarded' (a pickup-trip check-in) -- both count as attended.
+  const boarded = rows.filter((r) => r.status === "boarded" || r.status === "alighted").length;
   const missed = rows.filter((r) => r.status === "missed").length;
   const excused = rows.filter((r) => r.status === "excused").length;
   const pending = rows.filter((r) => r.status === "pending").length;

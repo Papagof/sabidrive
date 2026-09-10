@@ -32,6 +32,38 @@ export function useFleetTrips() {
       .eq("status", "in_progress")
       .order("started_at", { ascending: false });
     if (data) setTrips(data as unknown as FleetTripRow[]);
+
+    // Backfill each trip's last known position on load/refetch -- the
+    // realtime subscription below only ever delivers *new* inserts, so
+    // without this, a trip that was already moving before this page opened
+    // (the common case) would show in the trip list but never appear on the
+    // map until its next GPS ping happens to arrive after we've subscribed.
+    const tripIds = (data ?? []).map((t) => t.id as string);
+    if (tripIds.length > 0) {
+      const { data: locationRows } = await supabase
+        .from("trip_locations")
+        .select("*")
+        .in("trip_id", tripIds)
+        .order("recorded_at", { ascending: false });
+      if (locationRows) {
+        setLatestByTrip((prev) => {
+          const next = { ...prev };
+          for (const row of locationRows as Record<string, unknown>[]) {
+            const tripId = row.trip_id as string;
+            if (next[tripId]) continue; // rows are newest-first; keep only the first (latest) per trip
+            next[tripId] = {
+              lat: row.lat as number,
+              lng: row.lng as number,
+              headingDeg: (row.heading_deg as number | null) ?? null,
+              speedKmh: (row.speed_kmh as number | null) ?? null,
+              recordedAt: row.recorded_at as string,
+              source: (row.source as "gps" | "manual" | undefined) ?? "gps"
+            };
+          }
+          return next;
+        });
+      }
+    }
   }, [supabase]);
 
   useEffect(() => {
