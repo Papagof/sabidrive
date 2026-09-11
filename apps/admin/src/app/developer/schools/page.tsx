@@ -26,6 +26,7 @@ export default function DeveloperSchoolsPage() {
   const { session, isLoading } = useSession();
   const [schools, setSchools] = useState<DeveloperSchoolRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [confirmingDeactivateId, setConfirmingDeactivateId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -99,6 +100,13 @@ export default function DeveloperSchoolsPage() {
     }
   }
 
+  const filteredSchools =
+    schools?.filter((s) => {
+      const term = searchTerm.trim().toLowerCase();
+      if (!term) return true;
+      return s.name.toLowerCase().includes(term) || (s.address ?? "").toLowerCase().includes(term);
+    }) ?? null;
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <h1 className="mb-4 text-2xl font-semibold text-brand-800">All schools</h1>
@@ -107,10 +115,18 @@ export default function DeveloperSchoolsPage() {
           {actionError}
         </Banner>
       ) : null}
-      {schools === null ? <p className="text-neutral-500">Loading…</p> : null}
       {schools !== null ? (
+        <input
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search schools by name or address…"
+          className="mb-4 min-h-control w-full rounded-lg border border-neutral-300 px-3 text-sm focus:border-brand-500 focus:outline-none"
+        />
+      ) : null}
+      {schools === null ? <p className="text-neutral-500">Loading…</p> : null}
+      {filteredSchools !== null ? (
         <div className="flex flex-col gap-2">
-          {schools.map((s) => (
+          {filteredSchools.map((s) => (
             <Card key={s.id} className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <div>
@@ -186,7 +202,9 @@ export default function DeveloperSchoolsPage() {
               {messageSentFor === s.id ? <p className="text-sm text-calm-700">Message sent.</p> : null}
             </Card>
           ))}
-          {schools.length === 0 ? <p className="text-neutral-500">No schools yet.</p> : null}
+          {filteredSchools.length === 0 ? (
+            <p className="text-neutral-500">{searchTerm.trim() ? "No schools match your search." : "No schools yet."}</p>
+          ) : null}
         </div>
       ) : null}
     </main>
