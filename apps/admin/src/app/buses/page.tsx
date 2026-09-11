@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
 import { adminQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { InviteUserForm } from "@/components/InviteUserForm";
 
@@ -65,6 +65,8 @@ export default function BusesPage() {
   const [deleteBlockedByHistory, setDeleteBlockedByHistory] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRetiring, setIsRetiring] = useState<string | null>(null);
+  const [confirmingRetireId, setConfirmingRetireId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   async function refetch() {
     if (!profile?.school_id) return;
@@ -90,8 +92,13 @@ export default function BusesPage() {
   if (isLoading) return null;
 
   async function handleCycleVerification(driverId: string, current: VerificationStatus | null) {
-    await adminQueries.setDriverVerification(supabase, driverId, nextVerificationStatus[current ?? "pending"]);
-    await refetch();
+    setActionError(null);
+    try {
+      await adminQueries.setDriverVerification(supabase, driverId, nextVerificationStatus[current ?? "pending"]);
+      await refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to update driver verification");
+    }
   }
 
   function startEdit(bus: BusRow) {
@@ -145,12 +152,16 @@ export default function BusesPage() {
 
   async function handleToggleRetire(bus: BusRow) {
     setIsRetiring(bus.id);
+    setActionError(null);
     try {
       await adminQueries.setBusRetired(supabase, bus.id, !bus.retired_at);
       setConfirmingDeleteId(null);
+      setConfirmingRetireId(null);
       setDeleteError(null);
       setDeleteBlockedByHistory(false);
       await refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to update bus retirement status");
     } finally {
       setIsRetiring(null);
     }
@@ -268,9 +279,21 @@ export default function BusesPage() {
         </Card>
 
         <div className="flex flex-col gap-2">
+          {actionError ? (
+            <Banner tone="caution" title="Couldn't complete that">
+              {actionError}
+            </Banner>
+          ) : null}
           {buses.map((bus) =>
             editingBusId === bus.id ? (
               <Card key={bus.id} className="flex flex-col gap-2">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void handleSaveEdit(bus.id);
+                  }}
+                  className="flex flex-col gap-2"
+                >
                 <p className="font-medium">{bus.label}</p>
                 <select
                   value={editDriverId}
@@ -318,13 +341,14 @@ export default function BusesPage() {
                 />
                 {editError ? <p className="text-sm text-critical-600">{editError}</p> : null}
                 <div className="flex gap-2">
-                  <Button onClick={() => handleSaveEdit(bus.id)} disabled={isSavingEdit} className="flex-1">
+                  <Button type="submit" disabled={isSavingEdit} className="flex-1">
                     {isSavingEdit ? "Saving..." : "Save"}
                   </Button>
-                  <Button variant="ghost" onClick={cancelEdit}>
+                  <Button type="button" variant="ghost" onClick={cancelEdit}>
                     Cancel
                   </Button>
                 </div>
+                </form>
               </Card>
             ) : (
               <Card key={bus.id} className="flex flex-col gap-2">
@@ -400,13 +424,25 @@ export default function BusesPage() {
                       </Button>
                     ) : null}
                   </div>
+                ) : confirmingRetireId === bus.id ? (
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1 text-sm text-neutral-500">
+                      Retire this bus? It&apos;ll be unassigned from its driver, backup driver, and route.
+                    </span>
+                    <Button variant="secondary" disabled={isRetiring === bus.id} onClick={() => handleToggleRetire(bus)}>
+                      {isRetiring === bus.id ? "Retiring..." : "Confirm retire"}
+                    </Button>
+                    <Button variant="ghost" onClick={() => setConfirmingRetireId(null)}>
+                      Cancel
+                    </Button>
+                  </div>
                 ) : (
                   <div className="flex gap-2">
                     <Button variant="ghost" onClick={() => setConfirmingDeleteId(bus.id)}>
                       Delete
                     </Button>
-                    <Button variant="ghost" disabled={isRetiring === bus.id} onClick={() => handleToggleRetire(bus)}>
-                      {isRetiring === bus.id ? "Retiring..." : "Retire"}
+                    <Button variant="ghost" onClick={() => setConfirmingRetireId(bus.id)}>
+                      Retire
                     </Button>
                   </div>
                 )}

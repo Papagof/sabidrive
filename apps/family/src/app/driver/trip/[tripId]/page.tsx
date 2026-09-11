@@ -89,8 +89,13 @@ export default function DriverTripPage() {
     e.preventDefault();
     const body = messageDraft.trim();
     if (!body) return;
-    setMessageDraft("");
-    await sendMessage(body);
+    setError(null);
+    try {
+      await sendMessage(body);
+      setMessageDraft("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send message");
+    }
   }
 
   async function handleEndTrip() {

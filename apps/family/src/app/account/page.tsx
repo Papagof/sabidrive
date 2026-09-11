@@ -9,16 +9,25 @@ import { SchoolLogo } from "@/components/SchoolLogo";
 
 type Step = "idle" | "entering_phone" | "code_sent";
 
-type NotificationType = "boarding" | "alighting" | "delay" | "geofence" | "mismatch" | "announcement" | "message";
+type NotificationType =
+  | "boarding"
+  | "alighting"
+  | "geofence"
+  | "mismatch"
+  | "announcement"
+  | "message"
+  | "pickup_address_changed"
+  | "stop_assignment_changed";
 
 const NOTIFICATION_TYPES: { type: NotificationType; label: string }[] = [
   { type: "boarding", label: "Boarding" },
   { type: "alighting", label: "Drop-off" },
   { type: "mismatch", label: "Missed pickup" },
-  { type: "delay", label: "Delays" },
   { type: "geofence", label: "Geofence alerts" },
   { type: "announcement", label: "School announcements" },
-  { type: "message", label: "Trip messages" }
+  { type: "message", label: "Trip messages" },
+  { type: "pickup_address_changed", label: "Pickup address updates" },
+  { type: "stop_assignment_changed", label: "Route/stop reassignment" }
 ];
 
 export default function AccountPage() {

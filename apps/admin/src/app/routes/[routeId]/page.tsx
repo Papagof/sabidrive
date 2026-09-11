@@ -204,7 +204,10 @@ export default function RouteDetailPage() {
 
   const sortedStops = [...stops].sort((a, b) => a.sequence_no - b.sequence_no);
   const markerPoints: MapPoint[] = [
-    ...stops.map((s) => ({ lat: s.lat, lng: s.lng })),
+    // While a stop is being edited, its stale pre-edit position is dropped
+    // in favor of editPosition -- otherwise the same stop would show two
+    // markers (its old spot and the new one) until Save.
+    ...stops.filter((s) => s.id !== editingStopId).map((s) => ({ lat: s.lat, lng: s.lng })),
     ...(pendingPoint ? [pendingPoint] : []),
     ...(editPosition ? [editPosition] : [])
   ];
@@ -395,7 +398,10 @@ export default function RouteDetailPage() {
           {editingStopId ? (
             <AddressSearch
               placeholder="Search an address to move this stop…"
-              onSelect={(r) => setEditPosition({ lat: r.lat, lng: r.lng })}
+              onSelect={(r) => {
+                setEditPosition({ lat: r.lat, lng: r.lng });
+                setPanTo({ lat: r.lat, lng: r.lng });
+              }}
             />
           ) : null}
           <div className="h-[28rem] overflow-hidden rounded-2xl border border-neutral-200">

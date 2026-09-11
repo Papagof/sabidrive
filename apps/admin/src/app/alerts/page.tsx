@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/AdminShell";
 import { useRequireAdmin } from "@/lib/useRequireRole";
-import { Button, Card, StatusPill } from "@sabidrive/ui";
+import { Banner, Button, Card, StatusPill } from "@sabidrive/ui";
 import { adminQueries, buildAlertsCsv, useSupabaseClient } from "@sabidrive/supabase";
 
 interface AlertRow {
@@ -27,6 +27,9 @@ export default function AlertsPage() {
   const [severityFilter, setSeverityFilter] = useState<(typeof SEVERITY_FILTERS)[number]>("all");
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [resolveNotes, setResolveNotes] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [isSubmittingResolve, setIsSubmittingResolve] = useState(false);
 
   async function refetch() {
     if (!profile?.school_id) return;
@@ -49,16 +52,32 @@ export default function AlertsPage() {
 
   async function handleAssign(alertId: string) {
     if (!profile) return;
-    await adminQueries.assignAlertToSelf(supabase, alertId, profile.id);
-    await refetch();
+    setAssigningId(alertId);
+    setActionError(null);
+    try {
+      await adminQueries.assignAlertToSelf(supabase, alertId, profile.id);
+      await refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to assign alert");
+    } finally {
+      setAssigningId(null);
+    }
   }
 
   async function handleSubmitResolve(alertId: string) {
     if (!profile) return;
-    await adminQueries.resolveAlert(supabase, alertId, profile.id, resolveNotes || undefined);
-    setResolvingId(null);
-    setResolveNotes("");
-    await refetch();
+    setIsSubmittingResolve(true);
+    setActionError(null);
+    try {
+      await adminQueries.resolveAlert(supabase, alertId, profile.id, resolveNotes || undefined);
+      setResolvingId(null);
+      setResolveNotes("");
+      await refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to resolve alert");
+    } finally {
+      setIsSubmittingResolve(false);
+    }
   }
 
   const filteredAlerts = severityFilter === "all" ? alerts : alerts.filter((a) => a.severity === severityFilter);
@@ -97,6 +116,12 @@ export default function AlertsPage() {
       </div>
       <p className="mb-4 text-xs text-neutral-500">Exports the 50 most recent alerts shown here.</p>
 
+      {actionError ? (
+        <Banner tone="caution" title="Couldn't complete that" className="mb-4">
+          {actionError}
+        </Banner>
+      ) : null}
+
       <div className="flex flex-col gap-2">
         {filteredAlerts.map((alert) => (
           <Card key={alert.id}>
@@ -118,8 +143,8 @@ export default function AlertsPage() {
               {!alert.resolved_at ? (
                 <div className="flex gap-2">
                   {!alert.assigned_to ? (
-                    <Button variant="ghost" onClick={() => handleAssign(alert.id)}>
-                      Assign to me
+                    <Button variant="ghost" disabled={assigningId === alert.id} onClick={() => handleAssign(alert.id)}>
+                      {assigningId === alert.id ? "Assigning..." : "Assign to me"}
                     </Button>
                   ) : null}
                   <Button
@@ -127,6 +152,7 @@ export default function AlertsPage() {
                     onClick={() => {
                       setResolvingId(alert.id);
                       setResolveNotes("");
+                      setActionError(null);
                     }}
                   >
                     Resolve
@@ -144,8 +170,16 @@ export default function AlertsPage() {
                   className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={() => handleSubmitResolve(alert.id)}>Confirm resolve</Button>
-                  <Button variant="ghost" onClick={() => setResolvingId(null)}>
+                  <Button disabled={isSubmittingResolve} onClick={() => handleSubmitResolve(alert.id)}>
+                    {isSubmittingResolve ? "Resolving..." : "Confirm resolve"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setResolvingId(null);
+                      setActionError(null);
+                    }}
+                  >
                     Cancel
                   </Button>
                 </div>

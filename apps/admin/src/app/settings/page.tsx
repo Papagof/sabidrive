@@ -200,6 +200,9 @@ export default function SettingsPage() {
             <label className="flex flex-col gap-1">
               <span className="text-sm font-medium text-neutral-700">Geofence radius (m)</span>
               <input
+                type="number"
+                min="1"
+                required
                 value={geofenceRadius}
                 onChange={(e) => setGeofenceRadius(e.target.value)}
                 className="min-h-control rounded-lg border border-neutral-300 px-3 focus:border-brand-500 focus:outline-none"

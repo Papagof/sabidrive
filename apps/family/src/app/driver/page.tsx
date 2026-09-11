@@ -24,6 +24,7 @@ export default function DriverHomePage() {
   const router = useRouter();
   const [bus, setBus] = useState<DriverBus | null>(null);
   const [isBusLoading, setIsBusLoading] = useState(true);
+  const [busError, setBusError] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [manifest, setManifest] = useState<RouteManifest | null>(null);
@@ -38,6 +39,7 @@ export default function DriverHomePage() {
     tripQueries
       .getDriverBus(supabase, profile.id)
       .then((data) => setBus(data as unknown as DriverBus))
+      .catch(() => setBusError(true))
       .finally(() => setIsBusLoading(false));
   }, [supabase, profile]);
 
@@ -76,10 +78,11 @@ export default function DriverHomePage() {
   if (!bus) {
     return (
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
-        <h1 className="text-xl font-semibold text-brand-800">No bus assigned yet</h1>
+        <h1 className="text-xl font-semibold text-brand-800">{busError ? "Couldn't load your bus" : "No bus assigned yet"}</h1>
         <p className="text-neutral-600">
-          Your school admin hasn&apos;t assigned you to a bus yet. Check back once they&apos;ve set you up on
-          the Buses page.
+          {busError
+            ? "Something went wrong loading your bus assignment — check your connection and reload."
+            : "Your school admin hasn't assigned you to a bus yet. Check back once they've set you up on the Buses page."}
         </p>
         <button
           className="text-sm text-neutral-500 hover:text-neutral-800"

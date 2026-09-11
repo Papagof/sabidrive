@@ -17,16 +17,22 @@ interface AnnouncementRow {
 export default function AnnouncementsPage() {
   const { profile, isLoading } = useRequireAdmin();
   const supabase = useSupabaseClient();
-  const [announcements, setAnnouncements] = useState<AnnouncementRow[]>([]);
+  const [announcements, setAnnouncements] = useState<AnnouncementRow[] | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   async function refetch() {
     if (!profile?.school_id) return;
-    const data = await adminQueries.getSchoolAnnouncements(supabase, profile.school_id);
-    setAnnouncements(data as unknown as AnnouncementRow[]);
+    setFetchError(false);
+    try {
+      const data = await adminQueries.getSchoolAnnouncements(supabase, profile.school_id);
+      setAnnouncements(data as unknown as AnnouncementRow[]);
+    } catch {
+      setFetchError(true);
+    }
   }
 
   useEffect(() => {
@@ -82,16 +88,22 @@ export default function AnnouncementsPage() {
         </Card>
 
         <div className="flex flex-col gap-2">
-          {announcements.map((a) => (
-            <Card key={a.id}>
-              <p className="font-medium">{a.title}</p>
-              <p className="text-sm text-neutral-600">{a.body}</p>
-              <p className="mt-1 text-xs text-neutral-500">
-                {a.profiles?.full_name} · {new Date(a.created_at).toLocaleString()}
-              </p>
-            </Card>
-          ))}
-          {announcements.length === 0 ? <p className="text-neutral-500">No announcements yet.</p> : null}
+          {announcements === null ? (
+            <p className="text-neutral-500">{fetchError ? "Couldn't load announcements." : "Loading…"}</p>
+          ) : (
+            <>
+              {announcements.map((a) => (
+                <Card key={a.id}>
+                  <p className="font-medium">{a.title}</p>
+                  <p className="text-sm text-neutral-600">{a.body}</p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {a.profiles?.full_name} · {new Date(a.created_at).toLocaleString()}
+                  </p>
+                </Card>
+              ))}
+              {announcements.length === 0 ? <p className="text-neutral-500">No announcements yet.</p> : null}
+            </>
+          )}
         </div>
       </div>
     </AdminShell>

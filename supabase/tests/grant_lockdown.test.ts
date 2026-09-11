@@ -21,14 +21,20 @@ import { SUPABASE_DB_URL } from "./helpers";
  */
 const RPCS: { name: string; signature: string }[] = [
   { name: "start_trip", signature: "public.start_trip(uuid, text)" },
+  { name: "end_trip", signature: "public.end_trip(uuid)" },
   { name: "check_in", signature: "public.check_in(uuid, uuid, text, text)" },
   { name: "trigger_sos", signature: "public.trigger_sos(uuid)" },
   {
     name: "record_trip_location",
     signature: "public.record_trip_location(uuid, double precision, double precision, numeric, numeric, numeric, jsonb, timestamptz)"
   },
+  {
+    name: "record_manual_trip_location",
+    signature: "public.record_manual_trip_location(uuid, double precision, double precision)"
+  },
   { name: "create_announcement", signature: "public.create_announcement(text, text)" },
-  { name: "update_student_pickup_address", signature: "public.update_student_pickup_address(uuid, text)" }
+  { name: "update_student_pickup_address", signature: "public.update_student_pickup_address(uuid, text)" },
+  { name: "is_trip_crew", signature: "public.is_trip_crew(uuid)" }
 ];
 
 const describeOrSkip = SUPABASE_DB_URL ? describe : describe.skip;

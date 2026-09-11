@@ -23,10 +23,14 @@ export default function ParentHomePage() {
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [studentsError, setStudentsError] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
-    studentQueries.getGuardianStudents(supabase, profile.id).then((data) => setStudents(data as unknown as StudentRow[]));
+    studentQueries
+      .getGuardianStudents(supabase, profile.id)
+      .then((data) => setStudents(data as unknown as StudentRow[]))
+      .catch(() => setStudentsError(true));
   }, [supabase, profile]);
 
   if (isLoading) {
@@ -94,7 +98,11 @@ export default function ParentHomePage() {
             ))}
           </div>
         ))}
-        {students.length === 0 ? <p className="text-neutral-500">No children linked to your account yet.</p> : null}
+        {students.length === 0 ? (
+          <p className="text-neutral-500">
+            {studentsError ? "Couldn't load your children — check your connection and reload." : "No children linked to your account yet."}
+          </p>
+        ) : null}
       </div>
     </main>
   );

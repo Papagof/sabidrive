@@ -61,6 +61,7 @@ export default function StudentTrackingPage() {
   const [codeStatus, setCodeStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [codeCooldown, setCodeCooldown] = useState<"board" | "alight" | null>(null);
   const [messageDraft, setMessageDraft] = useState("");
+  const [messageError, setMessageError] = useState<string | null>(null);
   const [addressDraft, setAddressDraft] = useState("");
   const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [addressStatus, setAddressStatus] = useState<string | null>(null);
@@ -169,8 +170,13 @@ export default function StudentTrackingPage() {
     e.preventDefault();
     const body = messageDraft.trim();
     if (!body) return;
-    setMessageDraft("");
-    await sendMessage(body);
+    setMessageError(null);
+    try {
+      await sendMessage(body);
+      setMessageDraft("");
+    } catch (err) {
+      setMessageError(err instanceof Error ? err.message : "Failed to send message");
+    }
   }
 
   if (isAuthLoading || !student) return null;
@@ -277,6 +283,7 @@ export default function StudentTrackingPage() {
               Send
             </Button>
           </form>
+          {messageError ? <p className="text-sm text-critical-600">{messageError}</p> : null}
         </Card>
       ) : null}
 

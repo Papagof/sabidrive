@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [schoolCenter, setSchoolCenter] = useState<MapPoint | undefined>(undefined);
   const [openAlerts, setOpenAlerts] = useState<{ severity: string }[] | null>(null);
   const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
+  const [statsError, setStatsError] = useState(false);
 
   useEffect(() => {
     if (!profile?.school_id) return;
@@ -37,10 +38,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!profile?.school_id) return;
-    adminQueries.getOpenAlerts(supabase, profile.school_id).then(setOpenAlerts);
+    setStatsError(false);
+    adminQueries.getOpenAlerts(supabase, profile.school_id).then(setOpenAlerts).catch(() => setStatsError(true));
     adminQueries
       .getTodaysAttendance(supabase, profile.school_id, todayISODate())
-      .then((rows) => setAttendanceSummary(summarizeAttendance(rows)));
+      .then((rows) => setAttendanceSummary(summarizeAttendance(rows)))
+      .catch(() => setStatsError(true));
   }, [supabase, profile?.school_id]);
 
   if (isLoading) return null;
@@ -62,7 +65,7 @@ export default function DashboardPage() {
         <Card className="flex flex-col gap-1">
           <h2 className="text-sm font-medium text-neutral-600">Open alerts</h2>
           {openAlerts === null ? (
-            <p className="text-neutral-500">Loading…</p>
+            <p className="text-neutral-500">{statsError ? "Couldn't load." : "Loading…"}</p>
           ) : openAlertsCount === 0 ? (
             <p className="text-xl font-semibold text-calm-700">All clear</p>
           ) : (
@@ -80,7 +83,7 @@ export default function DashboardPage() {
         <Card className="flex flex-col gap-1">
           <h2 className="text-sm font-medium text-neutral-600">Today&apos;s attendance</h2>
           {attendanceSummary === null ? (
-            <p className="text-neutral-500">Loading…</p>
+            <p className="text-neutral-500">{statsError ? "Couldn't load." : "Loading…"}</p>
           ) : attendanceSummary.total === 0 ? (
             <p className="text-neutral-500">No trips today yet.</p>
           ) : (
