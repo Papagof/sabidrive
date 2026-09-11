@@ -536,6 +536,7 @@ export interface DeveloperSchoolRow {
   address: string | null;
   timezone: string;
   created_at: string;
+  deactivated_at: string | null;
   studentCount: number;
   busCount: number;
 }
@@ -560,4 +561,38 @@ export async function getDeveloperSchools(supabase: SabiDriveSupabaseClient): Pr
     throw new Error(body.error ?? "Request failed");
   }
   return body.schools as DeveloperSchoolRow[];
+}
+
+/** Whole-school reversible lockout -- see /api/developer/schools/deactivate's own docstring. */
+export async function setSchoolDeactivated(supabase: SabiDriveSupabaseClient, schoolId: string, deactivate: boolean): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Not signed in");
+
+  const response = await fetch("/api/developer/schools/deactivate", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ schoolId, deactivate })
+  });
+  const body = await response.json();
+  if (!response.ok) {
+    throw new Error(body.error ?? "Request failed");
+  }
+}
+
+/** Emails a school's original signup admin -- see /api/developer/schools/message's own docstring. */
+export async function sendDeveloperMessage(supabase: SabiDriveSupabaseClient, schoolId: string, subject: string, body: string): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Not signed in");
+
+  const response = await fetch("/api/developer/schools/message", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ schoolId, subject, body })
+  });
+  const responseBody = await response.json();
+  if (!response.ok) {
+    throw new Error(responseBody.error ?? "Request failed");
+  }
 }

@@ -365,6 +365,50 @@ export type Database = {
           },
         ]
       }
+      developer_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: number
+          recipient_email: string
+          resend_message_id: string | null
+          school_id: string
+          sender_email: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: never
+          recipient_email: string
+          resend_message_id?: string | null
+          school_id: string
+          sender_email: string
+          status: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: never
+          recipient_email?: string
+          resend_message_id?: string | null
+          school_id?: string
+          sender_email?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "developer_messages_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guardian_student_links: {
         Row: {
           created_at: string
@@ -757,6 +801,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          deactivated_at: string | null
           geofence_lat: number | null
           geofence_lng: number | null
           geofence_radius_m: number
@@ -769,6 +814,7 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          deactivated_at?: string | null
           geofence_lat?: number | null
           geofence_lng?: number | null
           geofence_radius_m?: number
@@ -781,6 +827,7 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          deactivated_at?: string | null
           geofence_lat?: number | null
           geofence_lng?: number | null
           geofence_radius_m?: number
