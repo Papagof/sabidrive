@@ -66,7 +66,11 @@ export function useTripMessages(tripId: string | null) {
       data: { user }
     } = await supabase.auth.getUser();
     if (!user) return;
-    const { error } = await supabase.from("trip_messages").insert({ trip_id: tripId, sender_id: user.id, body });
+    // sender_name is always overwritten server-side by the set_trip_message_sender_name
+    // trigger -- the client can't reliably resolve another guardian's own name anyway.
+    const { error } = await supabase
+      .from("trip_messages")
+      .insert({ trip_id: tripId, sender_id: user.id, sender_name: "", body });
     if (error) throw error;
   }
 

@@ -1,7 +1,7 @@
 /**
  * Generated via the Supabase MCP `generate_typescript_types` tool from the
- * live schema (project ubslfmtqebuuxujohksd) after Phase 2 migrations
- * 0008-0014. Regenerate and replace this file whenever migrations change.
+ * live schema (project ubslfmtqebuuxujohksd). Regenerate and replace this
+ * file whenever migrations change.
  */
 export type Json =
   | string
@@ -15,7 +15,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -454,6 +454,38 @@ export type Database = {
           },
         ]
       }
+      native_push_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "native_push_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -702,38 +734,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "push_subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      native_push_tokens: {
-        Row: {
-          created_at: string
-          id: string
-          platform: string
-          token: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          platform: string
-          token: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          platform?: string
-          token?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "native_push_tokens_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -992,48 +992,6 @@ export type Database = {
           },
         ]
       }
-      trip_messages: {
-        Row: {
-          body: string
-          created_at: string
-          id: string
-          sender_id: string
-          sender_name: string
-          trip_id: string
-        }
-        Insert: {
-          body: string
-          created_at?: string
-          id?: string
-          sender_id: string
-          sender_name?: string
-          trip_id: string
-        }
-        Update: {
-          body?: string
-          created_at?: string
-          id?: string
-          sender_id?: string
-          sender_name?: string
-          trip_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trip_messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trip_messages_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       trip_locations: {
         Row: {
           heading_deg: number | null
@@ -1075,38 +1033,41 @@ export type Database = {
           },
         ]
       }
-      trip_stop_etas: {
+      trip_messages: {
         Row: {
-          distance_m: number | null
-          eta_minutes: number
-          stop_id: string
+          body: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_name: string
           trip_id: string
-          updated_at: string
         }
         Insert: {
-          distance_m?: number | null
-          eta_minutes: number
-          stop_id: string
+          body: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          sender_name: string
           trip_id: string
-          updated_at?: string
         }
         Update: {
-          distance_m?: number | null
-          eta_minutes?: number
-          stop_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_name?: string
           trip_id?: string
-          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "trip_stop_etas_stop_id_fkey"
-            columns: ["stop_id"]
+            foreignKeyName: "trip_messages_sender_id_fkey"
+            columns: ["sender_id"]
             isOneToOne: false
-            referencedRelation: "stops"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "trip_stop_etas_trip_id_fkey"
+            foreignKeyName: "trip_messages_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
@@ -1140,6 +1101,45 @@ export type Database = {
           },
           {
             foreignKeyName: "trip_stop_approaches_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_stop_etas: {
+        Row: {
+          distance_m: number | null
+          eta_minutes: number
+          stop_id: string
+          trip_id: string
+          updated_at: string
+        }
+        Insert: {
+          distance_m?: number | null
+          eta_minutes: number
+          stop_id: string
+          trip_id: string
+          updated_at?: string
+        }
+        Update: {
+          distance_m?: number | null
+          eta_minutes?: number
+          stop_id?: string
+          trip_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_stop_etas_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "stops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_stop_etas_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
@@ -1228,11 +1228,20 @@ export type Database = {
     Functions: {
       can_view_trip: { Args: { target_trip_id: string }; Returns: boolean }
       check_in: {
-        Args: { p_event_type?: string; p_method?: string; p_qr_token: string; p_trip_id: string }
+        Args: {
+          p_event_type?: string
+          p_method?: string
+          p_qr_token: string
+          p_trip_id: string
+        }
         Returns: undefined
       }
       check_rate_limit: {
-        Args: { p_bucket: string; p_max_attempts: number; p_window_seconds: number }
+        Args: {
+          p_bucket: string
+          p_max_attempts: number
+          p_window_seconds: number
+        }
         Returns: boolean
       }
       create_announcement: {
@@ -1289,12 +1298,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1318,11 +1327,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1343,11 +1352,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1368,11 +1377,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1385,11 +1394,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
