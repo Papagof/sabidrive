@@ -580,6 +580,30 @@ export async function setSchoolDeactivated(supabase: SabiDriveSupabaseClient, sc
   }
 }
 
+/**
+ * Whether the signed-in caller is on the DEVELOPER_EMAILS allowlist -- used
+ * only to decide whether AdminShell shows a "Developer" nav link, so it
+ * quietly resolves to false rather than throwing on no session/network
+ * error. The real authorization check still happens server-side on every
+ * actual developer route regardless of what this returns.
+ */
+export async function checkIsDeveloper(supabase: SabiDriveSupabaseClient): Promise<boolean> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) return false;
+
+  try {
+    const response = await fetch("/api/developer/check", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) return false;
+    const body = await response.json();
+    return body.isDeveloper === true;
+  } catch {
+    return false;
+  }
+}
+
 /** Emails a school's original signup admin -- see /api/developer/schools/message's own docstring. */
 export async function sendDeveloperMessage(supabase: SabiDriveSupabaseClient, schoolId: string, subject: string, body: string): Promise<void> {
   const { data: sessionData } = await supabase.auth.getSession();

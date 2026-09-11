@@ -1,16 +1,8 @@
 import { NextResponse } from "next/server";
-import { createAnonServerSupabaseClient, createServiceRoleSupabaseClient, getUserFromAccessToken } from "@sabidrive/supabase/server";
+import { verifyDeveloperCaller } from "@/lib/developerAuth";
 
 // Node runtime (not edge) -- needs the service-role key and the Admin API.
 export const runtime = "nodejs";
-
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const DEVELOPER_EMAILS = (process.env.DEVELOPER_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // Resend's own no-verification-required sending address -- works for
@@ -36,24 +28,9 @@ interface MessageBody {
  * developer-only route in this app.
  */
 export async function POST(req: Request) {
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) {
-    return NextResponse.json({ error: "Missing Authorization header" }, { status: 401 });
-  }
-
-  const anonClient = createAnonServerSupabaseClient(SUPABASE_URL, ANON_KEY);
-  const caller = await getUserFromAccessToken(anonClient, token);
-  if (!caller) {
-    return NextResponse.json({ error: "Invalid or expired session" }, { status: 401 });
-  }
-
-  const serviceClient = createServiceRoleSupabaseClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-
-  const { data: callerUser } = await serviceClient.auth.admin.getUserById(caller.id);
-  const callerEmail = callerUser.user?.email?.toLowerCase();
-  if (!callerEmail || !DEVELOPER_EMAILS.includes(callerEmail)) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-  }
+  const auth = await verifyDeveloperCaller(req);
+  if (!auth.ok) return auth.response;
+  const { serviceClient, email: callerEmail } = auth;
 
   let body: MessageBody;
   try {

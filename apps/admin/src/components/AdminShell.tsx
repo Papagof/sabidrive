@@ -23,9 +23,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const supabase = useSupabaseClient();
   const router = useRouter();
-  const { profile } = useSession();
+  const { session, profile } = useSession();
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [isDeveloper, setIsDeveloper] = useState(false);
 
   useEffect(() => {
     if (!profile?.school_id) return;
@@ -36,6 +37,23 @@ export function AdminShell({ children }: { children: ReactNode }) {
     });
   }, [supabase, profile?.school_id]);
 
+  useEffect(() => {
+    // Depends on the access token (a stable primitive), not just `supabase`
+    // -- the client reference is stable across a login redirect, but the
+    // session itself hydrates asynchronously, and checkIsDeveloper reads it
+    // via getSession() at call time. Without this, the check can fire once
+    // before the session is actually available and never re-run. Using the
+    // token itself (not the whole `session` object, which gets a new
+    // reference on every onAuthStateChange firing -- INITIAL_SESSION,
+    // SIGNED_IN, etc. -- even when the token hasn't changed) avoids
+    // re-checking redundantly, same "depend on a primitive, not the whole
+    // object" pattern the school-name effect above already uses.
+    if (!session?.access_token) return;
+    adminQueries.checkIsDeveloper(supabase).then(setIsDeveloper);
+  }, [supabase, session?.access_token]);
+
+  const navItems = isDeveloper ? [...NAV_ITEMS, { href: "/developer/schools", label: "Developer" }] : NAV_ITEMS;
+
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
@@ -45,7 +63,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             {schoolName ?? "Admin"}
           </span>
           <nav className="flex gap-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
