@@ -6,6 +6,13 @@
     "node": "22.x"
   },
   "packageManager": "pnpm@9.15.0",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "9.15.0",
+      "onFail": "warn"
+    }
+  },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
