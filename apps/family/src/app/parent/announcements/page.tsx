@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card } from "@sabidrive/ui";
+import { Card, SubscriptionGate } from "@sabidrive/ui";
 import { studentQueries, useNotifications, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 import { SchoolLogo } from "@/components/SchoolLogo";
@@ -13,7 +13,7 @@ interface AnnouncementsStudentRow {
 }
 
 export default function AnnouncementsPage() {
-  const { profile, isLoading } = useRequireGuardianAccess();
+  const { profile, isLoading, isBlocked } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
   const router = useRouter();
   const { notifications } = useNotifications(profile?.id ?? null);
@@ -26,6 +26,20 @@ export default function AnnouncementsPage() {
   }, [supabase, profile]);
 
   if (isLoading) return null;
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
+    );
+  }
 
   // Same "only show a logo when every linked child shares one school"
   // fallback as the parent home page -- a genuinely multi-school guardian

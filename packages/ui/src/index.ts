@@ -7,5 +7,6 @@ export * from "./components/TripMap";
 export * from "./components/AddressSearch";
 export * from "./components/PasswordInput";
 export * from "./components/AnimatedBusesBackdrop";
+export * from "./components/SubscriptionGate";
 export * from "./tokens/colors";
 export * from "./tokens/spacing";

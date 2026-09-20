@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { Banner, Button, Card, StatusPill, statusToneMap, SubscriptionGate } from "@sabidrive/ui";
 import { tripQueries, useSupabaseClient, useTripMessages } from "@sabidrive/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
 import { useLiveLocationSharing } from "@/lib/useLiveLocationSharing";
@@ -30,7 +30,7 @@ interface AttendanceRow {
 
 export default function DriverTripPage() {
   const { tripId } = useParams<{ tripId: string }>();
-  const { profile, isLoading: isAuthLoading } = useRequireRole(["driver"]);
+  const { profile, isLoading: isAuthLoading, isBlocked } = useRequireRole(["driver"]);
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [attendance, setAttendance] = useState<AttendanceRow[]>([]);
@@ -112,6 +112,20 @@ export default function DriverTripPage() {
   }
 
   if (isAuthLoading) return null;
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
+    );
+  }
 
   const completedStatus = direction === "pickup" ? "boarded" : "alighted";
   const completedCount = attendance.filter((a) => a.status === completedStatus).length;

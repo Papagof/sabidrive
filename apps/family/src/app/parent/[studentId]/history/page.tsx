@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { useParams, useRouter } from "next/navigation";
+import { Banner, Button, Card, StatusPill, statusToneMap, SubscriptionGate } from "@sabidrive/ui";
 import {
   studentQueries,
   buildTripHistory,
@@ -36,8 +36,9 @@ const onTimeLabel: Record<OnTimeStatus, string> = {
 
 export default function TripHistoryPage() {
   const { studentId } = useParams<{ studentId: string }>();
-  const { isLoading: isAuthLoading } = useRequireGuardianAccess();
+  const { isLoading: isAuthLoading, isBlocked } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
+  const router = useRouter();
 
   const [studentName, setStudentName] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -66,6 +67,20 @@ export default function TripHistoryPage() {
   }, [supabase, studentId]);
 
   if (isAuthLoading) return null;
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
+    );
+  }
 
   function handleExportCsv() {
     if (!entries) return;

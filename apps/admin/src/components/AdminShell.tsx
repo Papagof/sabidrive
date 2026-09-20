@@ -3,7 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { adminQueries, useSession, useSupabaseClient } from "@sabidrive/supabase";
+import { adminQueries, useBillingStatus, useSession, useSupabaseClient } from "@sabidrive/supabase";
+import { SubscriptionGate } from "@sabidrive/ui";
+import { BillingPanel } from "./BillingPanel";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Fleet map" },
@@ -15,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/reports", label: "Reports" },
   { href: "/announcements", label: "Announcements" },
   { href: "/sms-log", label: "SMS log" },
+  { href: "/billing", label: "Billing" },
   { href: "/activity", label: "Activity" },
   { href: "/settings", label: "Settings" }
 ];
@@ -27,6 +30,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [schoolName, setSchoolName] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [isDeveloper, setIsDeveloper] = useState(false);
+  const billing = useBillingStatus(profile?.school_id ?? null);
 
   useEffect(() => {
     if (!profile?.school_id) return;
@@ -53,6 +57,33 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }, [supabase, session?.access_token]);
 
   const navItems = isDeveloper ? [...NAV_ITEMS, { href: "/developer/schools", label: "Developer" }] : NAV_ITEMS;
+
+  // A past_due school gets the whole admin app replaced by the billing
+  // panel -- nothing else is reachable until the admin pays. /login,
+  // /signup, /set-password, /auth-bridge all sit outside AdminShell, so
+  // this never blocks the one path (signing in) needed to reach this
+  // screen in the first place.
+  if (billing.isBlocked && profile?.school_id) {
+    return (
+      <SubscriptionGate
+        variant="pay"
+        title="Subscription required"
+        description="Your school's trial or subscription has ended. Pay to restore full access for your staff, drivers, and parents."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      >
+        <BillingPanel
+          schoolId={profile.school_id}
+          status={billing.status}
+          trialEndsAt={billing.trialEndsAt}
+          currentPeriodEnd={billing.currentPeriodEnd}
+          onActivated={billing.refresh}
+        />
+      </SubscriptionGate>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50">

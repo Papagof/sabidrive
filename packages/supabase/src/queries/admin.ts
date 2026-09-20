@@ -620,3 +620,56 @@ export async function sendDeveloperMessage(supabase: SabiDriveSupabaseClient, sc
     throw new Error(responseBody.error ?? "Request failed");
   }
 }
+
+export interface BillingTransactionRow {
+  id: string;
+  paystack_reference: string;
+  amount_kobo: number;
+  student_count: number;
+  status: string;
+  period_start: string | null;
+  period_end: string | null;
+  created_at: string;
+}
+
+/** The caller's own school's payment history -- readable directly under billing_transactions_select_admin (0053). */
+export async function getBillingTransactions(supabase: SabiDriveSupabaseClient, schoolId: string): Promise<BillingTransactionRow[]> {
+  const { data, error } = await supabase
+    .from("billing_transactions")
+    .select("id, paystack_reference, amount_kobo, student_count, status, period_start, period_end, created_at")
+    .eq("school_id", schoolId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+/** Starts a Paystack hosted-checkout session for the caller's own school -- see /api/billing/initialize's own docstring. */
+export async function initializeSubscriptionCheckout(supabase: SabiDriveSupabaseClient): Promise<string> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Not signed in");
+
+  const response = await fetch("/api/billing/initialize", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const body = await response.json();
+  if (!response.ok) {
+    throw new Error(body.error ?? "Request failed");
+  }
+  return body.authorization_url as string;
+}
+
+/** Confirms a just-completed Paystack transaction on redirect-back -- see /api/billing/verify's own docstring. */
+export async function verifySubscriptionPayment(supabase: SabiDriveSupabaseClient, reference: string): Promise<boolean> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) return false;
+
+  const response = await fetch(`/api/billing/verify?reference=${encodeURIComponent(reference)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!response.ok) return false;
+  const body = await response.json();
+  return body.verified === true;
+}

@@ -3,13 +3,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Scanner, type IDetectedBarcode } from "@yudiel/react-qr-scanner";
-import { Button, Banner, Card } from "@sabidrive/ui";
+import { Button, Banner, Card, SubscriptionGate } from "@sabidrive/ui";
 import { studentQueries, tripQueries, userQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
 
 export default function ScanPage() {
   const { tripId } = useParams<{ tripId: string }>();
-  const { isLoading: isAuthLoading } = useRequireRole(["driver"]);
+  const { isLoading: isAuthLoading, isBlocked } = useRequireRole(["driver"]);
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [eventType, setEventType] = useState<"board" | "alight">("board");
@@ -118,6 +118,20 @@ export default function ScanPage() {
   }
 
   if (isAuthLoading) return null;
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
+    );
+  }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-6 py-10">

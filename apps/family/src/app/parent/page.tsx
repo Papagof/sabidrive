@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card } from "@sabidrive/ui";
+import { Card, SubscriptionGate } from "@sabidrive/ui";
 import { studentQueries, useSupabaseClient } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
@@ -19,7 +19,7 @@ interface StudentRow {
 }
 
 export default function ParentHomePage() {
-  const { profile, isLoading } = useRequireGuardianAccess();
+  const { profile, isLoading, isBlocked } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [students, setStudents] = useState<StudentRow[]>([]);
@@ -38,6 +38,20 @@ export default function ParentHomePage() {
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-neutral-500">Loading…</p>
       </main>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
     );
   }
 

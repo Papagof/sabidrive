@@ -216,6 +216,50 @@ export type Database = {
           },
         ]
       }
+      billing_transactions: {
+        Row: {
+          amount_kobo: number
+          created_at: string
+          id: string
+          paystack_reference: string
+          period_end: string | null
+          period_start: string | null
+          school_id: string
+          status: string
+          student_count: number
+        }
+        Insert: {
+          amount_kobo: number
+          created_at?: string
+          id?: string
+          paystack_reference: string
+          period_end?: string | null
+          period_start?: string | null
+          school_id: string
+          status: string
+          student_count: number
+        }
+        Update: {
+          amount_kobo?: number
+          created_at?: string
+          id?: string
+          paystack_reference?: string
+          period_end?: string | null
+          period_start?: string | null
+          school_id?: string
+          status?: string
+          student_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_transactions_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       buses: {
         Row: {
           attendant_id: string | null
@@ -801,6 +845,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          current_period_end: string | null
           deactivated_at: string | null
           geofence_lat: number | null
           geofence_lng: number | null
@@ -809,11 +854,15 @@ export type Database = {
           logo_url: string | null
           name: string
           on_time_threshold_minutes: number
+          paystack_customer_code: string | null
+          subscription_status: string
           timezone: string
+          trial_ends_at: string | null
         }
         Insert: {
           address?: string | null
           created_at?: string
+          current_period_end?: string | null
           deactivated_at?: string | null
           geofence_lat?: number | null
           geofence_lng?: number | null
@@ -822,11 +871,15 @@ export type Database = {
           logo_url?: string | null
           name: string
           on_time_threshold_minutes?: number
+          paystack_customer_code?: string | null
+          subscription_status?: string
           timezone?: string
+          trial_ends_at?: string | null
         }
         Update: {
           address?: string | null
           created_at?: string
+          current_period_end?: string | null
           deactivated_at?: string | null
           geofence_lat?: number | null
           geofence_lng?: number | null
@@ -835,7 +888,10 @@ export type Database = {
           logo_url?: string | null
           name?: string
           on_time_threshold_minutes?: number
+          paystack_customer_code?: string | null
+          subscription_status?: string
           timezone?: string
+          trial_ends_at?: string | null
         }
         Relationships: []
       }
@@ -1251,6 +1307,7 @@ export type Database = {
       current_role: { Args: never; Returns: string }
       current_school_id: { Args: never; Returns: string }
       end_trip: { Args: { p_trip_id: string }; Returns: undefined }
+      expire_stale_subscriptions: { Args: never; Returns: undefined }
       is_guardian_of: { Args: { target_student_id: string }; Returns: boolean }
       is_trip_crew: { Args: { p_trip_id: string }; Returns: boolean }
       purge_old_data: { Args: never; Returns: undefined }

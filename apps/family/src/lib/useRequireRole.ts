@@ -2,12 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, type Profile } from "@sabidrive/supabase";
+import { useBillingStatus, useSession, type Profile } from "@sabidrive/supabase";
 
 /** Redirects to /login (no session) or the correct home (wrong role) once loading settles. */
 export function useRequireRole(allowedRoles: Profile["role"][]) {
   const router = useRouter();
   const { session, profile, isLoading } = useSession();
+  const billing = useBillingStatus(profile?.school_id ?? null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -20,7 +21,7 @@ export function useRequireRole(allowedRoles: Profile["role"][]) {
     }
   }, [isLoading, session, profile, allowedRoles, router]);
 
-  return { session, profile, isLoading };
+  return { session, profile, isLoading, isBlocked: billing.isBlocked };
 }
 
 /**
@@ -34,11 +35,12 @@ export function useRequireRole(allowedRoles: Profile["role"][]) {
 export function useRequireGuardianAccess() {
   const router = useRouter();
   const { session, profile, isLoading } = useSession();
+  const billing = useBillingStatus(profile?.school_id ?? null);
 
   useEffect(() => {
     if (isLoading) return;
     if (!session) router.replace("/login");
   }, [isLoading, session, router]);
 
-  return { session, profile, isLoading };
+  return { session, profile, isLoading, isBlocked: billing.isBlocked };
 }

@@ -35,6 +35,8 @@ export const statusToneMap: Record<string, StatusTone> = {
   rejected: "caution",
   active: "info",
   inactive: "neutral",
+  trialing: "neutral",
+  past_due: "caution",
   resolved: "positive",
   simulated_sent: "neutral",
   on_time: "positive",

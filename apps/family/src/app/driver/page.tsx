@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { Button, Card, StatusPill, statusToneMap, SubscriptionGate } from "@sabidrive/ui";
 import { buildRouteManifest, tripQueries, useSupabaseClient, type RouteManifest } from "@sabidrive/supabase";
 import { useRequireRole } from "@/lib/useRequireRole";
 import { NotificationOptIn } from "@/components/NotificationOptIn";
@@ -19,7 +19,7 @@ interface DriverBus {
 }
 
 export default function DriverHomePage() {
-  const { profile, isLoading } = useRequireRole(["driver"]);
+  const { profile, isLoading, isBlocked } = useRequireRole(["driver"]);
   const supabase = useSupabaseClient();
   const router = useRouter();
   const [bus, setBus] = useState<DriverBus | null>(null);
@@ -72,6 +72,20 @@ export default function DriverHomePage() {
       <main className="flex min-h-screen items-center justify-center">
         <p className="text-neutral-500">Loading your bus…</p>
       </main>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
     );
   }
 

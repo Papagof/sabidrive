@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Banner, Button, Card, StatusPill, statusToneMap } from "@sabidrive/ui";
+import { Banner, Button, Card, StatusPill, statusToneMap, SubscriptionGate } from "@sabidrive/ui";
 import type { MapStop } from "@sabidrive/ui";
 import {
   studentQueries,
@@ -48,7 +48,7 @@ interface DriverContact {
 
 export default function StudentTrackingPage() {
   const { studentId } = useParams<{ studentId: string }>();
-  const { profile, isLoading: isAuthLoading } = useRequireGuardianAccess();
+  const { profile, isLoading: isAuthLoading, isBlocked } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
   const router = useRouter();
 
@@ -180,6 +180,20 @@ export default function StudentTrackingPage() {
   }
 
   if (isAuthLoading || !student) return null;
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
+    );
+  }
 
   const driver = driverContact?.buses?.driver;
   const stops: MapStop[] = stop ? [stop] : [];

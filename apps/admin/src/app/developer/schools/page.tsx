@@ -13,9 +13,18 @@ interface DeveloperSchoolRow {
   timezone: string;
   created_at: string;
   deactivated_at: string | null;
+  subscription_status: "trialing" | "active" | "past_due";
+  trial_ends_at: string | null;
+  current_period_end: string | null;
   studentCount: number;
   busCount: number;
 }
+
+const SUBSCRIPTION_LABELS: Record<DeveloperSchoolRow["subscription_status"], string> = {
+  trialing: "Trial",
+  active: "Active",
+  past_due: "Past due"
+};
 
 // Gated on a bare session, not useRequireAdmin() -- a developer account may
 // have no admin-role profile at all. Real authorization is entirely
@@ -137,9 +146,25 @@ export default function DeveloperSchoolsPage() {
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{s.name}</p>
                       {s.deactivated_at ? <StatusPill label="Deactivated" tone="caution" /> : null}
+                      <StatusPill
+                        label={SUBSCRIPTION_LABELS[s.subscription_status]}
+                        tone={
+                          s.subscription_status === "active"
+                            ? "info"
+                            : s.subscription_status === "past_due"
+                              ? "caution"
+                              : "neutral"
+                        }
+                      />
                     </div>
                     <p className="text-sm text-neutral-500">
                       {s.address ?? "No address"} · {s.timezone} · created {new Date(s.created_at).toLocaleDateString()}
+                      {s.subscription_status === "trialing" && s.trial_ends_at
+                        ? ` · trial ends ${new Date(s.trial_ends_at).toLocaleDateString()}`
+                        : null}
+                      {s.subscription_status === "active" && s.current_period_end
+                        ? ` · paid through ${new Date(s.current_period_end).toLocaleDateString()}`
+                        : null}
                     </p>
                   </div>
                   <p className="text-sm text-neutral-600">

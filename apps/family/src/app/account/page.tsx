@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Banner, Button, Card, StatusPill } from "@sabidrive/ui";
+import { useRouter } from "next/navigation";
+import { Banner, Button, Card, StatusPill, SubscriptionGate } from "@sabidrive/ui";
 import { studentQueries, useSupabaseClient, userQueries } from "@sabidrive/supabase";
 import { useRequireGuardianAccess } from "@/lib/useRequireRole";
 import { SchoolLogo } from "@/components/SchoolLogo";
@@ -31,8 +32,9 @@ const NOTIFICATION_TYPES: { type: NotificationType; label: string }[] = [
 ];
 
 export default function AccountPage() {
-  const { profile, isLoading } = useRequireGuardianAccess();
+  const { profile, isLoading, isBlocked } = useRequireGuardianAccess();
   const supabase = useSupabaseClient();
+  const router = useRouter();
   const [emailConfirmed, setEmailConfirmed] = useState(false);
 
   const [phoneVerified, setPhoneVerified] = useState(false);
@@ -99,6 +101,20 @@ export default function AccountPage() {
   }
 
   if (isLoading) return null;
+
+  if (isBlocked) {
+    return (
+      <SubscriptionGate
+        variant="contact-admin"
+        title="Your school's account is on hold"
+        description="Please contact your school administrator to restore access."
+        onSignOut={async () => {
+          await supabase.auth.signOut();
+          router.replace("/login");
+        }}
+      />
+    );
+  }
 
   async function handleSendCode(e: FormEvent) {
     e.preventDefault();
